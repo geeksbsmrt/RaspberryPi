@@ -24,6 +24,10 @@ jobs:
             --exclude ".git/" \
             --exclude ".github/"
 
+      - name: Validate DOCKER_DIR
+        run: |
+          cd "${{ secrets.DOCKER_DIR }}"
+          echo "$PWD"
       - name: Navigate to Docker Compose directory
         run: cd "${{ secrets.DOCKER_DIR }}"
 
