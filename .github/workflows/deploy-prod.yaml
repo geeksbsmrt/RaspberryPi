@@ -1,0 +1,43 @@
+name: Deploy Docker Stack to Prod
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Prod
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Sync configuration files
+        run: |
+          echo "Syncing repository contents to ${{ secrets.DOCKER_DIR }}"
+          rsync -av --delete --checksum \
+            "$GITHUB_WORKSPACE/docker" \
+            "${{ secrets.DOCKER_DIR }}/" \
+            --exclude ".git/" \
+            --exclude ".github/"
+
+      - name: Navigate to Docker Compose directory
+        run: cd "${{ secrets.DOCKER_DIR }}"
+
+      - name: Pull latest Docker images
+        run: |
+          cd "${{ secrets.DOCKER_DIR }}"
+          docker compose pull
+
+      - name: Apply Docker Compose changes
+        run: |
+          cd "${{ secrets.DOCKER_DIR }}"
+          docker compose up -d --remove-orphans
+
+      - name: (Optional) Prune unused Docker images
+        if: success()
+        run: |
+          echo "Pruning unused Docker images..."
+          docker image prune -af
