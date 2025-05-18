@@ -29,15 +29,15 @@ jobs:
       - name: Pull latest Docker images
         run: |
           cd "${{ secrets.DOCKER_DIR }}"
-          docker compose pull
+          sudo docker compose pull
 
       - name: Apply Docker Compose changes
         run: |
           cd "${{ secrets.DOCKER_DIR }}"
-          docker compose up -d --remove-orphans
+          sudo docker compose up -d --remove-orphans
 
       - name: (Optional) Prune unused Docker images
         if: success()
         run: |
           echo "Pruning unused Docker images..."
-          docker image prune -af
+          sudo docker image prune -af
