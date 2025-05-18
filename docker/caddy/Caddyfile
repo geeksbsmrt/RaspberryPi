@@ -1,0 +1,79 @@
+# Refer to the Caddy docs for more information:
+# https://caddyserver.com/docs/caddyfile
+
+# Global Options Block
+{
+	# Set CA to Google's Certificate Authority
+	acme_ca https://dv.acme-v02.api.pki.goog/directory
+}
+
+# Default options for external facing sites
+(external) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Xss-Protection "1; mode=block"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Content-Security-Policy "upgrade-insecure-requests"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Cache-Control "public, max-age=15, must-revalidate"
+		Permissions-Policy "accelerometer=(), ambient-light-sensor=(), autoplay=(self), camera=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(*), speaker-selection=(), usb=(), xr-spatial-tracking=()"
+		[defer]
+	}
+	handle_errors {
+		respond "{err.status_code} {err.status_text}"
+	}
+	file_server
+}
+
+# Default options for internal facing sites
+(internal) {
+	tls internal
+
+	handle_errors {
+		respond "{err.status_code} {err.status_text}"
+	}
+}
+
+(smrtgeekdevs) {
+    tls smrtgeekapps@gmail.com {
+        ca https://dv.acme-v02.api.pki.goog/directory
+        eab {env.SMRTGEEKDEVS_EAB_KID} {env.SMRTGEEKDEVS_EAB_MAC}
+    }
+}
+
+(geeksbsmrt) {
+    tls geeksbsmrt@gmail.com {
+        ca https://dv.acme-v02.api.pki.goog/directory
+        eab {env.GEEKSBSMRT_EAB_KID} {env.GEEKSBSMRT_EAB_MAC}
+    }
+}
+
+geeksbsmrt.com {
+	import external
+	import geeksbsmrt
+
+    root * /srv/geeksbsmrt.com
+}
+
+smrtgeekdevs.com {
+	import external
+
+	#root * /var/www/smrtgeekdevs
+}
+
+pihole.smrtgeekdevs.com {
+	import external
+	import smrtgeekdevs
+
+	redir / /admin{uri}
+    reverse_proxy pihole
+}
+
+# [Previous *.smrtgeekdevs.com commented block removed for security/obsolescence]
+
+
+
+
+
+
