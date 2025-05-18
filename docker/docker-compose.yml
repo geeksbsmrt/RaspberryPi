@@ -53,10 +53,6 @@ services:
     networks:
       macvlan:
         ipv4_address: 192.168.254.3
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - /srv:/srv
@@ -162,7 +158,7 @@ services:
       - TZ="America/New_York"
     networks:
       macvlan:
-        ipv4_address: 192.168.254.224 
+        ipv4_address: 192.168.254.224
     # Uptime Kuma UI will be on http://192.168.254.224:3001
 volumes:
   caddy_data:
