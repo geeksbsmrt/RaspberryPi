@@ -18,7 +18,7 @@ jobs:
       - name: Sync configuration files
         run: |
           echo "Syncing repository contents to ${{ secrets.DOCKER_DIR }}"
-          rsync -av --delete --checksum \
+          rsync -av --checksum \
             "$GITHUB_WORKSPACE/docker/" \
             "${{ secrets.DOCKER_DIR }}/" \
             --exclude ".git/" \
