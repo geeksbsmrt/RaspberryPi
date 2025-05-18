@@ -1,0 +1,20 @@
+modules:
+  http_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+      # preferred_ip_protocol: "ip4" # Uncomment if needed
+
+  tcp_connect: # For basic port checks
+    prober: tcp
+    timeout: 10s
+
+  dns_probe: # For functional DNS checks
+    prober: dns
+    timeout: 5s
+    dns:
+      query_name: "example.com" # Blackbox will attempt to resolve this domain using the target DNS server
+      query_type: "A"
+      # transport_protocol: "udp" # Default
+      # preferred_ip_protocol: "ip4" # Default
