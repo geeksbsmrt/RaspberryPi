@@ -1,14 +1,28 @@
 # Refer to the Caddy docs for more information:
 # https://caddyserver.com/docs/caddyfile
 
-# Global Options Block
-{
-	# Set CA to Google's Certificate Authority
-	acme_ca https://dv.acme-v02.api.pki.goog/directory
+# Default options for internal facing sites
+(home) {
+	tls internal
+
+	handle_errors {
+		respond "{err.status_code} {err.status_text}"
+	}
+}
+
+grafana.home {
+	import home
+	reverse_proxy http://192.168.254.221:3000
+}
+
+uptime.home {
+	import home
+	reverse_proxy http://192.168.254.224:3001
 }
 
 # Default options for external facing sites
 (external) {
+	acme_ca https://dv.acme-v02.api.pki.goog/directory
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 		X-Xss-Protection "1; mode=block"
@@ -26,23 +40,8 @@
 	file_server
 }
 
-# Default options for internal facing sites
-(internal) {
-	tls internal
-
-	handle_errors {
-		respond "{err.status_code} {err.status_text}"
-	}
-}
-
-(smrtgeekdevs) {
-    tls smrtgeekapps@gmail.com {
-        ca https://dv.acme-v02.api.pki.goog/directory
-        eab {env.SMRTGEEKDEVS_EAB_KID} {env.SMRTGEEKDEVS_EAB_MAC}
-    }
-}
-
 (geeksbsmrt) {
+	import external
     tls geeksbsmrt@gmail.com {
         ca https://dv.acme-v02.api.pki.goog/directory
         eab {env.GEEKSBSMRT_EAB_KID} {env.GEEKSBSMRT_EAB_MAC}
@@ -50,25 +49,30 @@
 }
 
 geeksbsmrt.com {
-	import external
 	import geeksbsmrt
 
     root * /srv/geeksbsmrt.com
 }
 
-smrtgeekdevs.com {
+(smrtgeekdevs) {
 	import external
+    tls smrtgeekapps@gmail.com {
+        ca https://dv.acme-v02.api.pki.goog/directory
+        eab {env.SMRTGEEKDEVS_EAB_KID} {env.SMRTGEEKDEVS_EAB_MAC}
+    }
+}
 
+smrtgeekdevs.com {
 	#root * /var/www/smrtgeekdevs
 }
 
 pihole.smrtgeekdevs.com {
-	import external
 	import smrtgeekdevs
 
 	redir / /admin{uri}
     reverse_proxy pihole
 }
+
 
 # *.smrtgeekdevs.com {
 # 	tls internal
