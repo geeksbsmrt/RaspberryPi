@@ -3,31 +3,48 @@ global:
   evaluation_interval: 30s
 
 scrape_configs:
-  - job_name: 'self' # Monitor Prometheus itself
+  - job_name: 'self'
     static_configs:
-      - targets: ['192.168.254.220:9090'] # Prometheus's MacVlan IP
+      - targets: ['192.168.254.220:9090']
 
-  - job_name: 'rpi_node_exporter' # Monitor Raspberry Pi host
+  - job_name: 'rpi_node_exporter'
     static_configs:
-      - targets: ['192.168.0.4:9100'] # IMPORTANT: Your Pi's actual LAN IP (e.g., 192.168.0.XX)
+      - targets: ['192.168.0.4:9100']
 
-  - job_name: 'docker_cadvisor' # Monitor Docker containers via cAdvisor
+  - job_name: 'docker_cadvisor'
     static_configs:
-      - targets: ['192.168.254.222:8080'] # cAdvisor's MacVlan IP
+      - targets: ['192.168.254.222:8080']
 
-  # --- Probing your existing services via Blackbox Exporter ---
+  - job_name: 'caddy'
+    static_configs:
+      - targets: ['192.168.254.3:2019']
+
   - job_name: 'website_and_http_checks'
     metrics_path: /probe
     params:
-      module: [http_2xx]  # Defined in blackbox.yml
+      module: [http_2xx]
     static_configs:
       - targets:
-        - https://geeksbsmrt.com               # Your Caddy website
-        - https://smrtgeekdevs.com            # Your Caddy website
-        - https://pihole.smrtgeekdevs.com      # Your Caddy website for Pi-hole
-        - http://192.168.254.1/admin/         # Pi-hole admin UI (via its MacVlan IP)
-        # Add other HTTP endpoints if needed, like Caddy itself if it has a status page
-        # - http://192.168.254.3 # Caddy (if it serves something on root HTTP)
+        - https://geeksbsmrt.com
+        - https://smrtgeekdevs.com
+        - https://pihole.smrtgeekdevs.com
+        - http://192.168.254.1/admin/
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 192.168.254.223:9115
+
+  - job_name: 'dns_service_checks'
+    metrics_path: /probe
+    params:
+      module: [dns_probe]
+    static_configs:
+      - targets:
+        - '192.168.254.1:53'
+        - '192.168.254.253:53'
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -35,36 +52,3 @@ scrape_configs:
         target_label: instance
       - target_label: __address__
         replacement: 192.168.254.223:9115  # Blackbox Exporter's MacVlan IP:Port
-
-  - job_name: 'dns_service_checks'
-    metrics_path: /probe
-    params:
-      module: [dns_probe]  # Defined in blackbox.yml; queries "example.com" by default via target DNS server
-    static_configs:
-      - targets:
-        - '192.168.254.1:53'    # Pi-hole DNS server
-        - '192.168.254.253:53'  # Unbound DNS server
-    relabel_configs:
-      - source_labels: [__address__]
-        target_label: __param_target # This will be the DNS server IP:Port
-      - source_labels: [__param_target]
-        target_label: instance # Makes the instance label the DNS server being checked
-      - target_label: __address__
-        replacement: 192.168.254.223:9115  # Blackbox Exporter's MacVlan IP:Port
-
-  # You can add more specific blackbox jobs for TCP checks if needed for Caddy/Pi-hole/Unbound ports.
-  # Example for Pi-hole TCP port 53 (redundant if DNS check works, but shows pattern)
-  # - job_name: 'pihole_tcp_port_53'
-  #   metrics_path: /probe
-  #   params:
-  #     module: [tcp_connect]
-  #   static_configs:
-  #     - targets:
-  #       - '192.168.254.1:53'
-  #   relabel_configs:
-  #     - source_labels: [__address__]
-  #       target_label: __param_target
-  #     - source_labels: [__param_target]
-  #       target_label: instance
-  #     - target_label: __address__
-  #       replacement: 192.168.254.223:9115
