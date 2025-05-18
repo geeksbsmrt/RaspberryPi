@@ -67,45 +67,45 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
-    hostname: prometheus # Consider a unique hostname
+    hostname: prometheus
     restart: unless-stopped
     volumes:
-      - ./prometheus/config:/etc/prometheus # You will create ./prometheus/config/prometheus.yml
-      - prometheus_data:/prometheus # New named volume for persistent data
+      - ./prometheus/config:/etc/prometheus
+      - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.retention.time=30d" # Adjust retention as needed for your SSD
+      - "--storage.tsdb.retention.time=30d"
       - "--storage.tsdb.path=/prometheus"
       - "--web.enable-lifecycle"
     networks:
-      macvlan: # This should match the name of your existing MacVlan network definition
-        ipv4_address: ${IP_PROMETHEUS} # STATIC IP for Prometheus - ensure this is free in your 192.168.254.0/24 range
+      macvlan:
+        ipv4_address: ${IP_PROMETHEUS}
     # Prometheus UI will be on http://192.168.254.220:9090
 
   grafana:
     image: grafana/grafana-oss:latest
     container_name: grafana
-    hostname: grafana # Consider a unique hostname
+    hostname: grafana
     restart: unless-stopped
     volumes:
-      - grafana_data:/var/lib/grafana # New named volume for persistent data
-      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources # Optional: for pre-configured datasources
-      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards # Optional: for pre-configured dashboards
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD} # Set this in your .env file
-      - TZ="America/New_York" # Match your other services
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - TZ="America/New_York"
     networks:
-      macvlan: # This should match the name of your existing MacVlan network definition
-        ipv4_address: ${IP_GRAFANA} # STATIC IP for Grafana - ensure this is free
+      macvlan:
+        ipv4_address: ${IP_GRAFANA}
     # Grafana UI will be on http://192.168.254.221:3000
 
   rpi_node_exporter:
     image: prom/node-exporter:latest
     container_name: rpi_node_exporter
-    hostname: rpi_node_exporter # Or your Pi's actual hostname
+    hostname: rpi_node_exporter
     restart: unless-stopped
-    network_mode: host # Uses the host's network stack
+    network_mode: host
     pid: host
     volumes:
       - /proc:/host/proc:ro
@@ -116,53 +116,53 @@ services:
       - "--path.sysfs=/host/sys"
       - "--path.rootfs=/rootfs"
       - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
-    # Prometheus will scrape it on <your_pi_host_ip>:9100
+    # Prometheus will scrape it on dockerHost:9100
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
-    hostname: cadvisor # Consider a unique hostname
+    hostname: cadvisor
     restart: unless-stopped
     # privileged: true # Uncomment if needed for full metrics, test without first
     devices:
-      - /dev/kmsg:/dev/kmsg # For kernel message logging by cAdvisor
+      - /dev/kmsg:/dev/kmsg
     volumes:
       - /:/rootfs:ro
-      - /var/run:/var/run:rw # cAdvisor needs rw for Docker socket integration
+      - /var/run:/var/run:rw
       - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro # Access to Docker metadata
+      - /var/lib/docker/:/var/lib/docker:ro
     networks:
-      macvlan: # This should match the name of your existing MacVlan network definition
-        ipv4_address: ${IP_CADVISOR} # STATIC IP for cAdvisor - ensure this is free
+      macvlan:
+        ipv4_address: ${IP_CADVISOR}
     # cAdvisor UI will be on http://192.168.254.222:8080
 
   blackbox_exporter:
     image: prom/blackbox-exporter:latest
     container_name: blackbox
-    hostname: blackbox # Consider a unique hostname
+    hostname: blackbox
     restart: unless-stopped
     volumes:
-      - ./blackbox/config:/config # You will create ./blackbox_exporter/config/blackbox.yml
+      - ./blackbox/config:/config
     command:
       - "--config.file=/config/blackbox.yml"
     networks:
-      macvlan: # This should match the name of your existing MacVlan network definition
-        ipv4_address: ${IP_BLACKBOX} # STATIC IP for Blackbox Exporter - ensure this is free
+      macvlan:
+        ipv4_address: ${IP_BLACKBOX}
     # Blackbox Exporter will listen on http://192.168.254.223:9115
 
   uptime_kuma:
     image: louislam/uptime-kuma:latest
     container_name: uptime_kuma
-    hostname: uptime_kuma # Consider a unique hostname
+    hostname: uptime_kuma
     restart: unless-stopped
     volumes:
-      - uptime_kuma_data:/app/data # New named volume for persistent data
-      - /var/run/docker.sock:/var/run/docker.sock:ro # For Docker container status monitoring
+      - uptime_kuma_data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
-      - TZ="America/New_York" # Match your other services
+      - TZ="America/New_York"
     networks:
-      macvlan: # This should match the name of your existing MacVlan network definition
-        ipv4_address: ${IP_UPTIME_KUMA} # STATIC IP for Uptime Kuma - ensure this is free
+      macvlan:
+        ipv4_address: ${IP_UPTIME_KUMA} 
     # Uptime Kuma UI will be on http://192.168.254.224:3001
 volumes:
   caddy_data:
