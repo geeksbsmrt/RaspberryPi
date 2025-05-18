@@ -58,7 +58,7 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./caddy/caddyfile:/etc/caddy/Caddyfile
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - /srv:/srv
       - caddy_data:/data
       - caddy_config:/config
@@ -71,12 +71,12 @@ services:
     restart: unless-stopped
     volumes:
       - ./prometheus/config:/etc/prometheus # You will create ./prometheus/config/prometheus.yml
-      - prometheus_data:/prometheus         # New named volume for persistent data
+      - prometheus_data:/prometheus # New named volume for persistent data
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.retention.time=30d' # Adjust retention as needed for your SSD
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.enable-lifecycle'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=30d" # Adjust retention as needed for your SSD
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
     networks:
       macvlan: # This should match the name of your existing MacVlan network definition
         ipv4_address: ${IP_PROMETHEUS} # STATIC IP for Prometheus - ensure this is free in your 192.168.254.0/24 range
@@ -90,7 +90,7 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana # New named volume for persistent data
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources # Optional: for pre-configured datasources
-      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards   # Optional: for pre-configured dashboards
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards # Optional: for pre-configured dashboards
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD} # Set this in your .env file
@@ -112,10 +112,10 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.sysfs=/host/sys'
-      - '--path.rootfs=/rootfs'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)'
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/rootfs"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
     # Prometheus will scrape it on <your_pi_host_ip>:9100
 
   cadvisor:
@@ -144,7 +144,7 @@ services:
     volumes:
       - ./blackbox/config:/config # You will create ./blackbox_exporter/config/blackbox.yml
     command:
-      - '--config.file=/config/blackbox.yml'
+      - "--config.file=/config/blackbox.yml"
     networks:
       macvlan: # This should match the name of your existing MacVlan network definition
         ipv4_address: ${IP_BLACKBOX} # STATIC IP for Blackbox Exporter - ensure this is free
