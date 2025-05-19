@@ -6,13 +6,6 @@ services:
     networks:
       macvlan:
         ipv4_address: 192.168.254.1
-    ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-      - "67:67/udp"
-      - "123:123/udp"
-      - "80:80/tcp"
-      - "443:443/tcp"
     environment:
       TZ: "America/New_York"
       FTLCONF_webserver_api_password: ${PIHOLE_UI_PASSWORD}
@@ -39,9 +32,6 @@ services:
     networks:
       macvlan:
         ipv4_address: 192.168.254.253
-    ports:
-      - "53:53/udp"
-      - "53:53/tcp"
     volumes:
       - "./unbound:/opt/unbound/etc/unbound:ro"
     restart: unless-stopped
