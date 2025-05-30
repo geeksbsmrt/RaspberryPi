@@ -1,0 +1,32 @@
+fail_fast: false # Set to true if you want it to stop on the first failing hook
+repos:
+  # Standard useful hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+      - id: check-merge-conflict
+
+  # Hook to prevent committing the plaintext secrets file (e.g., your local ./docker/.env)
+  - repo: local
+    hooks:
+      - id: forbid-plaintext-docker-env
+        language: system
+        name: Forbid plaintext docker/.env
+        files: '^docker/\.env$' # This ensures the hook triggers if docker/.env is modified/staged
+        entry: | # Use the literal block scalar indicator here
+          bash -c 'if git diff --cached --name-only | grep -Fxq "docker/.env"; then echo "ERROR: Plaintext docker/.env is staged for commit! It should be encrypted in secrets.sops.env."; exit 1; fi'
+
+# Optional (more advanced): A hook to check if *.sops.env files are actually encrypted and you can decrypt them.
+# This requires your local SOPS/age setup to be able to decrypt.
+  - repo: local
+    hooks:
+      - id: check-sops-files-are-encrypted
+        language: system
+        name: Check SOPS files are encrypted and decryptable
+        files: '\.sops\.env$' # Run on all *.sops.env files
+        entry: |
+          bash -c 'sops --decrypt "$1" > /dev/null || (echo "ERROR: File $1 is not a valid SOPS encrypted file or cannot be decrypted with your local keys. Ensure changes are encrypted." && exit 1)'
