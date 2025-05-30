@@ -4,9 +4,6 @@
 {
 	# Global options
 
-	# CA Issuer
-	acme_ca https://dv.acme-v02.api.pki.goog/directory
-
 	# Monitoring
 	admin :2019
 	metrics {
@@ -43,6 +40,11 @@ uptime.home {
 # Default options for external facing sites
 (external) {
 	import all
+
+	tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
+
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 		X-Xss-Protection "1; mode=block"
@@ -59,10 +61,6 @@ uptime.home {
 
 (geeksbsmrt) {
 	import external
-    tls geeksbsmrt@gmail.com {
-        ca https://dv.acme-v02.api.pki.goog/directory
-        eab {env.GEEKSBSMRT_EAB_KID} {env.GEEKSBSMRT_EAB_MAC}
-    }
 }
 
 geeksbsmrt.com {
@@ -83,10 +81,6 @@ analytics.geeksbsmrt.com {
 
 (smrtgeekdevs) {
 	import external
-    tls smrtgeekapps@gmail.com {
-        ca https://dv.acme-v02.api.pki.goog/directory
-        eab {env.SMRTGEEKDEVS_EAB_KID} {env.SMRTGEEKDEVS_EAB_MAC}
-    }
 }
 
 smrtgeekdevs.com {
