@@ -42,7 +42,7 @@ services:
   caddy:
     container_name: caddy
     hostname: caddy
-    image: caddy:latest
+    image: ghcr.io/caddybuilds/caddy-cloudflare:latest
     restart: unless-stopped
     networks:
       macvlan:
