@@ -25,6 +25,8 @@ services:
       - SYS_TIME
       - SYS_NICE
     restart: unless-stopped
+  # 192.168.254.1
+
   unbound:
     container_name: unbound
     image: "mvance/unbound-rpi:latest"
@@ -35,6 +37,8 @@ services:
     volumes:
       - "./unbound:/opt/unbound/etc/unbound:ro"
     restart: unless-stopped
+  # 192.168.254.253
+
   caddy:
     container_name: caddy
     hostname: caddy
@@ -48,8 +52,54 @@ services:
       - /srv:/srv
       - caddy_data:/data
       - caddy_config:/config
+    environment:
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+      - ACME_DNS=cloudflare
+  # 192.168.254.3
+
+  umami_db:
+    image: postgres:latest-alpine # Official image, multi-arch supports ARM64
+    container_name: umami_db
+    hostname: umami_db
+    restart: unless-stopped
+    networks:
+      macvlan: # Your existing MacVlan network
+        ipv4_address: 192.168.254.4 # STATIC IP for Umami DB - CHOOSE A FREE IP
+    volumes:
+      - umami_db_data:/var/lib/postgresql/data # Persistent storage for database
+    environment:
+      POSTGRES_USER: ${UMAMI_DB_USER}         # From .env file (via GitHub Secrets)
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD}   # From .env file (via GitHub Secrets)
+      POSTGRES_DB: ${UMAMI_DB_NAME}           # From .env file (via GitHub Secrets)
+    healthcheck: # Optional, but good for ensuring DB is ready before Umami app starts
+      test: ["CMD-SHELL", "pg_isready -U ${UMAMI_DB_USER} -d ${UMAMI_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  # 192.168.254.4
+
+  umami_app:
+    image: docker.umami.is/umami-software/umami:postgresql-latest # Official image, multi-arch supports ARM64
+    container_name: umami_app
+    hostname: umami_app
+    restart: unless-stopped
+    networks:
+      macvlan: # Your existing MacVlan network
+        ipv4_address: 192.168.254.5 # STATIC IP for Umami App - CHOOSE A FREE IP
+    depends_on:
+      umami_db: # Wait for DB to be healthy (if healthcheck is defined)
+        condition: service_healthy
+    environment:
+      # Use the MacVlan IP of your umami_db container here
+      DATABASE_URL: postgresql://${UMAMI_DB_USER}:${UMAMI_DB_PASSWORD}@192.168.254.4:5432/${UMAMI_DB_NAME}
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${UMAMI_APP_SECRET} # From .env file (via GitHub Secrets) - IMPORTANT: Must be a strong random string
+      TZ: "America/New_York" # Or your preferred timezone
+      DISABLE_LOGIN: "false" # Default is false, allows login to create admin. Set to true after initial setup if desired.
+  # 192.168.254.5:3000 default
 
   # --- Monitoring Services ---
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -156,6 +206,7 @@ volumes:
   prometheus_data:
   grafana_data:
   uptime_kuma_data:
+  umami_db_data:
 networks:
   macvlan:
     name: pi0vlan
