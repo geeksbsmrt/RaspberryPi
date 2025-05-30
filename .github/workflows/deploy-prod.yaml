@@ -15,6 +15,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify SOPS and age installation on runner
+        run: |
+          echo "Checking SOPS version..."
+          sops --version --check-for-updates
+          echo "Checking age version..."
+          age --version
+
+      - name: Decrypt secrets.sops.env to .env file on Pi
+        env:
+          SOPS_AGE_KEY: ${{ secrets.RUNNER_AGE_PRIVATE_KEY }}
+          TARGET_ENV_FILE: ${{ secrets.DOCKER_DIR }}/.env
+          # Using an intermediate env var for the target file path for clarity in the script
+        run: |
+          echo "Decrypting secrets from $GITHUB_WORKSPACE/secrets.sops.env to ${TARGET_ENV_FILE}"
+          sudo -E sops --decrypt "$GITHUB_WORKSPACE/secrets.sops.env" > "${TARGET_ENV_FILE}"
+          sudo -E chmod 600 "${TARGET_ENV_FILE}"
+          echo ".env file created at ${TARGET_ENV_FILE} with restricted permissions."
+
+
       - name: Sync configuration files
         run: |
           echo "Syncing repository contents to ${{ secrets.DOCKER_DIR }}"
@@ -22,7 +41,8 @@ jobs:
             "$GITHUB_WORKSPACE/docker/" \
             "${{ secrets.DOCKER_DIR }}/" \
             --exclude ".git/" \
-            --exclude ".github/"
+            --exclude ".github/" \
+            --exclude "*.sops.env"
 
       - name: Navigate to Docker Compose directory
         run: cd "${{ secrets.DOCKER_DIR }}"
