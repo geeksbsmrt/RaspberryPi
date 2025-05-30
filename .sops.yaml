@@ -1,0 +1,8 @@
+# .sops.yaml
+# This tells SOPS to create new encrypted files using the keys below
+# and defines who can decrypt existing files matching the rules.
+creation_rules:
+  - path_regex: '.env$'
+    age:
+      age13pmf2jna228g9n780j7tl63qdws4gdll36rtuvk74nld5pet543q5ch3wf,
+      age1ryc8jh6xye29kgaxqwy57n7qunxak5w8kdtpgk0lwwjuh3w2gywsha6ja2
