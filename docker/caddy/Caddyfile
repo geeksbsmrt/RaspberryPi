@@ -14,13 +14,20 @@
 	}
 }
 
+# Global Impoorts
+(all) {
+	handle_errors {
+        rewrite * /404.html
+        file_server {
+            status 404
+        }
+    }
+}
+
 # Default options for internal facing sites
 (home) {
+	import all
 	tls internal
-
-	handle_errors {
-		respond "{err.status_code} {err.status_text}"
-	}
 }
 
 grafana.home {
@@ -35,6 +42,7 @@ uptime.home {
 
 # Default options for external facing sites
 (external) {
+	import all
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
 		X-Xss-Protection "1; mode=block"
@@ -45,9 +53,6 @@ uptime.home {
 		Cache-Control "public, max-age=15, must-revalidate"
 		Permissions-Policy "accelerometer=(), ambient-light-sensor=(), autoplay=(self), camera=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(*), speaker-selection=(), usb=(), xr-spatial-tracking=()"
 		[defer]
-	}
-	handle_errors {
-		respond "{err.status_code} {err.status_text}"
 	}
 	file_server
 }
@@ -64,6 +69,10 @@ geeksbsmrt.com {
 	import geeksbsmrt
 
     root * /srv/geeksbsmrt.com
+}
+
+*.geeksbsmrt.com {
+	import geeksbsmrt
 }
 
 (smrtgeekdevs) {
@@ -83,6 +92,10 @@ pihole.smrtgeekdevs.com {
 
 	redir / /admin{uri}
     reverse_proxy pihole
+}
+
+*.smrtgeekdevs.com {
+	import smrtgeekdevs
 }
 
 
