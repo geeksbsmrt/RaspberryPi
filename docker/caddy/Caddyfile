@@ -71,6 +71,12 @@ geeksbsmrt.com {
     root * /srv/geeksbsmrt.com
 }
 
+analytics.geeksbsmrt.com {
+    import geeksbsmrt
+
+    reverse_proxy http://192.168.254.5:3000
+}
+
 *.geeksbsmrt.com {
 	import geeksbsmrt
 }
