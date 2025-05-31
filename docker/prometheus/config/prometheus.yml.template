@@ -1,23 +1,24 @@
+# ./docker/prometheus/config/prometheus.yml.template
 global:
   scrape_interval: 30s
   evaluation_interval: 30s
 
 scrape_configs:
-  - job_name: 'self'
+  - job_name: 'prometheus_self' # Renamed for clarity from 'self'
     static_configs:
-      - targets: ['192.168.254.220:9090']
+      - targets: ['${IP_PROMETHEUS}:9090']
 
   - job_name: 'rpi_node_exporter'
     static_configs:
-      - targets: ['192.168.0.4:9100']
+      - targets: ['${IP_PI_HOST}:9100'] # Using variable for Pi Host IP
 
   - job_name: 'docker_cadvisor'
     static_configs:
-      - targets: ['192.168.254.222:8080']
+      - targets: ['${IP_CADVISOR}:8080']
 
-  - job_name: 'caddy'
+  - job_name: 'caddy_metrics' # Renamed for clarity from 'caddy'
     static_configs:
-      - targets: ['192.168.254.3:2019']
+      - targets: ['${IP_CADDY}:2019']
     metrics_path: /metrics
 
   - job_name: 'website_and_http_checks'
@@ -29,27 +30,27 @@ scrape_configs:
         - https://geeksbsmrt.com
         - https://smrtgeekdevs.com
         - https://pihole.smrtgeekdevs.com
-        - http://192.168.254.1/admin/
+        - http://${IP_PIHOLE}/admin/ # Using variable for Pi-hole IP
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: 192.168.254.223:9115
+        replacement: ${IP_BLACKBOX}:9115 # Blackbox Exporter's MacVlan IP
 
   - job_name: 'dns_service_checks'
     metrics_path: /probe
     params:
-      module: [dns_probe]
+      module: [dns_probe] # From your blackbox.yml
     static_configs:
       - targets:
-        - '192.168.254.1:53'
-        - '192.168.254.253:53'
+        - '${IP_PIHOLE}:53'    # Pi-hole DNS using variable
+        - '${IP_UNBOUND}:53' # Unbound DNS using variable
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: 192.168.254.223:9115  # Blackbox Exporter's MacVlan IP:Port
+        replacement: ${IP_BLACKBOX}:9115  # Blackbox Exporter's MacVlan IP
