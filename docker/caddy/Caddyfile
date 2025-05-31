@@ -11,7 +11,7 @@
 	}
 }
 
-# Global Impoorts
+# Global Imports
 (all) {
 	handle_errors {
         rewrite * /404.html
