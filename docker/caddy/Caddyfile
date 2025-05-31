@@ -97,12 +97,3 @@ pihole.smrtgeekdevs.com {
 *.smrtgeekdevs.com {
 	import smrtgeekdevs
 }
-
-
-# [Previous *.smrtgeekdevs.com commented block removed for security/obsolescence]
-
-
-
-
-
-
