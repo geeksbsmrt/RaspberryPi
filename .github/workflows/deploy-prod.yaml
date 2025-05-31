@@ -56,17 +56,44 @@ jobs:
 
       - name: Prepare Docker Configurations (Template Prometheus Config)
         env:
-          DOCKER_CONFIG_SOURCE_DIR: "$GITHUB_WORKSPACE/docker"
-          DOCKER_CONFIG_TARGET_DIR: "${{ secrets.DOCKER_DIR }}"
+          DOCKER_CONFIG_TARGET_DIR: ${{ secrets.DOCKER_DIR }} # For the .env file path
         run: |
           echo "Sourcing environment variables from ${DOCKER_CONFIG_TARGET_DIR}/.env"
           set -a # Automatically export all variables from sourced file
-          source "${DOCKER_CONFIG_TARGET_DIR}/.env"
+          if [ -f "${DOCKER_CONFIG_TARGET_DIR}/.env" ]; then
+            source "${DOCKER_CONFIG_TARGET_DIR}/.env"
+          else
+            echo "ERROR: .env file not found at ${DOCKER_CONFIG_TARGET_DIR}/.env. Cannot proceed with templating."
+            exit 1 # Exit if .env file is crucial and not found
+          fi
           set +a
 
+          # Define input and output paths using GITHUB_WORKSPACE directly
+          INPUT_TEMPLATE_PATH="$GITHUB_WORKSPACE/docker/prometheus/config/prometheus.yml.template"
+          OUTPUT_PROCESSED_PATH="$GITHUB_WORKSPACE/docker/prometheus/config/prometheus.yml"
+
           echo "Templating Prometheus configuration..."
-          envsubst < "${DOCKER_CONFIG_SOURCE_DIR}/prometheus/config/prometheus.yml.template" > "${DOCKER_CONFIG_SOURCE_DIR}/prometheus/config/prometheus.yml"
-          echo "Prometheus configuration templated."
+          echo "Input template: ${INPUT_TEMPLATE_PATH}"
+          echo "Output file: ${OUTPUT_PROCESSED_PATH}"
+
+          # Check if the template file actually exists before trying to use it
+          if [ ! -f "${INPUT_TEMPLATE_PATH}" ]; then
+            echo "ERROR: Template file NOT FOUND at ${INPUT_TEMPLATE_PATH}"
+            echo "Listing contents of $GITHUB_WORKSPACE/docker/prometheus/config/ for debugging:"
+            ls -la "$GITHUB_WORKSPACE/docker/prometheus/config/" || echo "Could not list directory."
+            exit 1
+          fi
+
+          # Perform the substitution
+          # All variables sourced from .env should now be available in the environment for envsubst
+          envsubst < "${INPUT_TEMPLATE_PATH}" > "${OUTPUT_PROCESSED_PATH}"
+
+          if [ $? -eq 0 ]; then
+            echo "Prometheus configuration templated successfully to ${OUTPUT_PROCESSED_PATH}"
+          else
+            echo "ERROR: envsubst command failed."
+            exit 1
+          fi
 
       - name: Sync configuration files
         run: |
