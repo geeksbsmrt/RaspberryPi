@@ -29,12 +29,12 @@
 
 grafana.home {
 	import home
-	reverse_proxy http://192.168.254.221:3000
+	reverse_proxy http://{$IP_GRAFANA}:3000
 }
 
 uptime.home {
 	import home
-	reverse_proxy http://192.168.254.224:3001
+	reverse_proxy http://{$IP_UPTIME_KUMA}:3001
 }
 
 # Default options for external facing sites
@@ -72,7 +72,7 @@ geeksbsmrt.com {
 analytics.geeksbsmrt.com {
     import geeksbsmrt
 
-    reverse_proxy http://192.168.254.5:3000
+    reverse_proxy http://{$IP_UMAMI_APP}:3000
 }
 
 *.geeksbsmrt.com {
@@ -97,12 +97,3 @@ pihole.smrtgeekdevs.com {
 *.smrtgeekdevs.com {
 	import smrtgeekdevs
 }
-
-
-# *.smrtgeekdevs.com {
-# 	tls internal
-# 	@router host router.smrtgeekdevs.com
-# 	handle @router {
-# 		reverse_proxy https://192.168.0.1:8443
-# 	}
-# }
