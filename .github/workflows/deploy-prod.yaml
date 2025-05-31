@@ -33,6 +33,26 @@ jobs:
           sudo -E chmod 600 "${TARGET_ENV_FILE}"
           echo ".env file created at ${TARGET_ENV_FILE} with restricted permissions."
 
+      - name: List Repository Contents for Debugging
+        run: |
+          echo "--- Current Directory (should be GITHUB_WORKSPACE root) ---"
+          pwd
+          echo "--- Listing GITHUB_WORKSPACE (repository root) ---"
+          ls -R $GITHUB_WORKSPACE
+          echo "--- Checking expected template path specifically ---"
+          EXPECTED_TEMPLATE_PATH="$GITHUB_WORKSPACE/docker/prometheus/config/prometheus.yml.template"
+          echo "Workflow expects template at: ${EXPECTED_TEMPLATE_PATH}"
+          if [ -f "${EXPECTED_TEMPLATE_PATH}" ]; then
+            echo "DEBUG: TEMPLATE FILE FOUND at expected path."
+          else
+            echo "DEBUG: TEMPLATE FILE ***NOT FOUND*** at expected path."
+            echo "--- Listing contents of $GITHUB_WORKSPACE/docker/prometheus/config/ (if it exists) ---"
+            ls -l $GITHUB_WORKSPACE/docker/prometheus/config/ || echo "DEBUG: Directory $GITHUB_WORKSPACE/docker/prometheus/config/ not found or cannot be listed."
+            echo "--- Listing contents of $GITHUB_WORKSPACE/docker/prometheus/ ---"
+            ls -l $GITHUB_WORKSPACE/docker/prometheus/ || echo "DEBUG: Directory $GITHUB_WORKSPACE/docker/prometheus/ not found."
+            echo "--- Listing contents of $GITHUB_WORKSPACE/docker/ ---"
+            ls -l $GITHUB_WORKSPACE/docker/ || echo "DEBUG: Directory $GITHUB_WORKSPACE/docker/ not found."
+          fi
 
       - name: Prepare Docker Configurations (Template Prometheus Config)
         env:
@@ -71,7 +91,7 @@ jobs:
           cd "${{ secrets.DOCKER_DIR }}"
           sudo docker compose up -d --remove-orphans
 
-      - name: (Optional) Prune unused Docker images
+      - name: Prune unused Docker images
         if: success()
         run: |
           echo "Pruning unused Docker images..."
