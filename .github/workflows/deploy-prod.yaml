@@ -34,6 +34,20 @@ jobs:
           echo ".env file created at ${TARGET_ENV_FILE} with restricted permissions."
 
 
+      - name: Prepare Docker Configurations (Template Prometheus Config)
+        env:
+          DOCKER_CONFIG_SOURCE_DIR: "$GITHUB_WORKSPACE/docker"
+          DOCKER_CONFIG_TARGET_DIR: "${{ secrets.DOCKER_DIR }}"
+        run: |
+          echo "Sourcing environment variables from ${DOCKER_CONFIG_TARGET_DIR}/.env"
+          set -a # Automatically export all variables from sourced file
+          source "${DOCKER_CONFIG_TARGET_DIR}/.env"
+          set +a
+
+          echo "Templating Prometheus configuration..."
+          envsubst < "${DOCKER_CONFIG_SOURCE_DIR}/prometheus/config/prometheus.yml.template" > "${DOCKER_CONFIG_SOURCE_DIR}/prometheus/config/prometheus.yml"
+          echo "Prometheus configuration templated."
+
       - name: Sync configuration files
         run: |
           echo "Syncing repository contents to ${{ secrets.DOCKER_DIR }}"
