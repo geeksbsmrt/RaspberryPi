@@ -5,16 +5,16 @@ services:
     hostname: pihole
     networks:
       macvlan:
-        ipv4_address: 192.168.254.1
+        ipv4_address: ${IP_PIHOLE}
     environment:
       TZ: "America/New_York"
       FTLCONF_webserver_api_password: ${PIHOLE_UI_PASSWORD}
       FTLCONF_dns_listeningMode: "all"
-      FTLCONF_dns_upstreams: "192.168.254.253"
+      FTLCONF_dns_upstreams: "${IP_UNBOUND}" # Uses Unbound's parameterized IP
       FTLCONF_dhcp_active: "true"
-      FTLCONF_dhcp_start: "192.168.0.51"
-      FTLCONF_dhcp_end: "192.168.253.254"
-      FTLCONF_dhcp_router: "192.168.0.1"
+      FTLCONF_dhcp_start: "${PIHOLE_DHCP_START}"
+      FTLCONF_dhcp_end: "${PIHOLE_DHCP_END}"
+      FTLCONF_dhcp_router: "${PIHOLE_DHCP_ROUTER}"
       FTLCONF_dhcp_leaseTime: "24h"
       FTLCONF_dhcp_ipv6: "true"
     volumes:
@@ -25,7 +25,6 @@ services:
       - SYS_TIME
       - SYS_NICE
     restart: unless-stopped
-  # 192.168.254.1
 
   unbound:
     container_name: unbound
@@ -33,11 +32,10 @@ services:
     hostname: unbound
     networks:
       macvlan:
-        ipv4_address: 192.168.254.253
+        ipv4_address: ${IP_UNBOUND}
     volumes:
       - "./unbound:/opt/unbound/etc/unbound:ro"
     restart: unless-stopped
-  # 192.168.254.253
 
   caddy:
     container_name: caddy
@@ -46,7 +44,7 @@ services:
     restart: unless-stopped
     networks:
       macvlan:
-        ipv4_address: 192.168.254.3
+        ipv4_address: ${IP_CADDY}
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - /srv:/srv
@@ -55,51 +53,46 @@ services:
     environment:
       - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
       - ACME_DNS=cloudflare
-  # 192.168.254.3
 
   umami_db:
-    image: postgres:17-alpine # Official image, multi-arch supports ARM64
+    image: postgres:17-alpine
     container_name: umami_db
     hostname: umami_db
     restart: unless-stopped
     networks:
-      macvlan: # Your existing MacVlan network
-        ipv4_address: 192.168.254.4 # STATIC IP for Umami DB - CHOOSE A FREE IP
+      macvlan:
+        ipv4_address: ${IP_UMAMI_DB}
     volumes:
-      - umami_db_data:/var/lib/postgresql/data # Persistent storage for database
+      - umami_db_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: ${UMAMI_DB_USER}         # From .env file (via GitHub Secrets)
-      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD}   # From .env file (via GitHub Secrets)
-      POSTGRES_DB: ${UMAMI_DB_NAME}           # From .env file (via GitHub Secrets)
-    healthcheck: # Optional, but good for ensuring DB is ready before Umami app starts
+      POSTGRES_USER: ${UMAMI_DB_USER}
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD}
+      POSTGRES_DB: ${UMAMI_DB_NAME}
+    healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${UMAMI_DB_USER} -d ${UMAMI_DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
-  # 192.168.254.4
 
   umami_app:
-    image: docker.umami.is/umami-software/umami:postgresql-latest # Official image, multi-arch supports ARM64
+    image: docker.umami.is/umami-software/umami:postgresql-latest
     container_name: umami_app
     hostname: umami_app
     restart: unless-stopped
     networks:
-      macvlan: # Your existing MacVlan network
-        ipv4_address: 192.168.254.5 # STATIC IP for Umami App - CHOOSE A FREE IP
+      macvlan:
+        ipv4_address: ${IP_UMAMI_APP}
     depends_on:
-      umami_db: # Wait for DB to be healthy (if healthcheck is defined)
+      umami_db:
         condition: service_healthy
     environment:
-      # Use the MacVlan IP of your umami_db container here
-      DATABASE_URL: postgresql://${UMAMI_DB_USER}:${UMAMI_DB_PASSWORD}@192.168.254.4:5432/${UMAMI_DB_NAME}
+      DATABASE_URL: postgresql://${UMAMI_DB_USER}:${UMAMI_DB_PASSWORD}@${IP_UMAMI_DB}:5432/${UMAMI_DB_NAME} # Uses Umami DB's parameterized IP
       DATABASE_TYPE: postgresql
-      APP_SECRET: ${UMAMI_APP_SECRET} # From .env file (via GitHub Secrets) - IMPORTANT: Must be a strong random string
-      TZ: "America/New_York" # Or your preferred timezone
-      DISABLE_LOGIN: "false" # Default is false, allows login to create admin. Set to true after initial setup if desired.
-  # 192.168.254.5:3000 default
+      APP_SECRET: ${UMAMI_APP_SECRET}
+      TZ: "America/New_York"
+      DISABLE_LOGIN: "false"
 
   # --- Monitoring Services ---
-
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -115,8 +108,7 @@ services:
       - "--web.enable-lifecycle"
     networks:
       macvlan:
-        ipv4_address: 192.168.254.220
-    # Prometheus UI will be on http://192.168.254.220:9090
+        ipv4_address: ${IP_PROMETHEUS}
 
   grafana:
     image: grafana/grafana-oss:latest
@@ -133,8 +125,7 @@ services:
       - TZ="America/New_York"
     networks:
       macvlan:
-        ipv4_address: 192.168.254.221
-    # Grafana UI will be on http://192.168.254.221:3000
+        ipv4_address: ${IP_GRAFANA}
 
   rpi_node_exporter:
     image: prom/node-exporter:latest
@@ -152,14 +143,13 @@ services:
       - "--path.sysfs=/host/sys"
       - "--path.rootfs=/rootfs"
       - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
-    # Prometheus will scrape it on dockerHost:9100
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
     hostname: cadvisor
     restart: unless-stopped
-    # privileged: true # Uncomment if needed for full metrics, test without first
+    # privileged: true
     devices:
       - /dev/kmsg:/dev/kmsg
     volumes:
@@ -169,8 +159,7 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
     networks:
       macvlan:
-        ipv4_address: 192.168.254.222
-    # cAdvisor UI will be on http://192.168.254.222:8080
+        ipv4_address: ${IP_CADVISOR}
 
   blackbox_exporter:
     image: prom/blackbox-exporter:latest
@@ -183,8 +172,7 @@ services:
       - "--config.file=/config/blackbox.yml"
     networks:
       macvlan:
-        ipv4_address: 192.168.254.223
-    # Blackbox Exporter will listen on http://192.168.254.223:9115
+        ipv4_address: ${IP_BLACKBOX}
 
   uptime_kuma:
     image: louislam/uptime-kuma:latest
@@ -198,8 +186,8 @@ services:
       - TZ="America/New_York"
     networks:
       macvlan:
-        ipv4_address: 192.168.254.224
-    # Uptime Kuma UI will be on http://192.168.254.224:3001
+        ipv4_address: ${IP_UPTIME_KUMA}
+
 volumes:
   caddy_data:
   caddy_config:
@@ -207,16 +195,17 @@ volumes:
   grafana_data:
   uptime_kuma_data:
   umami_db_data:
+
 networks:
   macvlan:
     name: pi0vlan
     driver: macvlan
     driver_opts:
-      parent: eth0
+      parent: "${MACVLAN_PARENT_INTERFACE}"
     ipam:
       config:
-        - subnet: "192.168.0.0/16"
-          gateway: "192.168.0.1"
-          ip_range: "192.168.254.0/24"
+        - subnet: "${MACVLAN_SUBNET}"
+          gateway: "${MACVLAN_GATEWAY}"
+          ip_range: "${MACVLAN_IP_RANGE}"
           aux_addresses:
-            host_shim_ip: "192.168.254.254"
+            host_shim_ip: "${MACVLAN_HOST_SHIM_IP}"
