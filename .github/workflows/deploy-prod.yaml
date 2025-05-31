@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "docker/**"
+      - "secrets.sops.env"
+      - ".github/workflows/deploy-prod.yaml"
   workflow_dispatch:
 
 jobs:
