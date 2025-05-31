@@ -53,6 +53,9 @@ services:
     environment:
       - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
       - ACME_DNS=cloudflare
+      - IP_GRAFANA=${IP_GRAFANA}
+      - IP_UPTIME_KUMA=${IP_UPTIME_KUMA}
+      - IP_UMAMI_APP=${IP_UMAMI_APP}
 
   umami_db:
     image: postgres:17-alpine
