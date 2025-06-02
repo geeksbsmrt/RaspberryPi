@@ -37,7 +37,7 @@ jobs:
           sudo -E chmod 600 "${TARGET_ENV_FILE}"
           echo ".env file created at ${TARGET_ENV_FILE} with restricted permissions."
 
-      - name: Prepare Docker Configurations (Template Prometheus Config)
+      - name: Prepare Docker Configurations (Template Configs)
         env:
           DOCKER_CONFIG_TARGET_DIR: ${{ secrets.DOCKER_DIR }} # For the .env file path
         run: |
@@ -55,6 +55,7 @@ jobs:
           INPUT_TEMPLATE_PATH="$GITHUB_WORKSPACE/docker/prometheus/config/prometheus.yml.template"
           OUTPUT_PROCESSED_PATH="$GITHUB_WORKSPACE/docker/prometheus/config/prometheus.yml"
 
+          # --- Prometheus ---
           echo "Templating Prometheus configuration..."
           echo "Input template: ${INPUT_TEMPLATE_PATH}"
           echo "Output file: ${OUTPUT_PROCESSED_PATH}"
@@ -78,6 +79,26 @@ jobs:
             exit 1
           fi
 
+          # --- Unbound ---
+          UNBOUND_TEMPLATE_PATH="$GITHUB_WORKSPACE/docker/unbound/unbound.conf.template"
+          UNBOUND_OUTPUT_PATH="$GITHUB_WORKSPACE/docker/unbound/unbound.conf" # Final config name
+          echo "Templating Unbound configuration..."
+          echo "Input template: ${UNBOUND_TEMPLATE_PATH}"
+          echo "Output file: ${UNBOUND_OUTPUT_PATH}"
+          if [ ! -f "${UNBOUND_TEMPLATE_PATH}" ]; then
+            echo "ERROR: Unbound template file NOT FOUND at ${UNBOUND_TEMPLATE_PATH}"
+            exit 1
+          fi
+          # IP_PIHOLE and IP_BLACKBOX are now in the environment from the sourced .env file
+          # List only the specific variables needed for Unbound to prevent unwanted substitutions
+          envsubst '${IP_PIHOLE} ${IP_BLACKBOX}' < "${UNBOUND_TEMPLATE_PATH}" > "${UNBOUND_OUTPUT_PATH}"
+          if [ $? -eq 0 ]; then
+            echo "Unbound configuration templated successfully."
+          else
+            echo "ERROR: envsubst for Unbound command failed."
+            exit 1
+          fi
+
       - name: Sync configuration files
         run: |
           echo "Syncing repository contents to ${{ secrets.DOCKER_DIR }}"
@@ -86,7 +107,9 @@ jobs:
             "${{ secrets.DOCKER_DIR }}/" \
             --exclude ".git/" \
             --exclude ".github/" \
-            --exclude "*.sops.env"
+            --exclude "*.sops.env" \
+            --exclude "prometheus/config/prometheus.yml.template" \
+            --exclude "unbound/unbound.conf.template"
 
       - name: Navigate to Docker Compose directory
         run: cd "${{ secrets.DOCKER_DIR }}"
