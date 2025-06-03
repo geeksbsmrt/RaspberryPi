@@ -58,7 +58,7 @@ services:
       - IP_UMAMI_APP=${IP_UMAMI_APP}
 
   umami_db:
-    image: postgres:17-alpine
+    image: postgres:alpine
     container_name: umami_db
     hostname: umami_db
     restart: unless-stopped
