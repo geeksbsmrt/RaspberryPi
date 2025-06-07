@@ -6,6 +6,10 @@ services:
     networks:
       macvlan:
         ipv4_address: ${IP_PIHOLE}
+      pihole_bridge: {}
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
     environment:
       TZ: "America/New_York"
       FTLCONF_webserver_api_password: ${PIHOLE_UI_PASSWORD}
@@ -200,6 +204,8 @@ volumes:
   umami_db_data:
 
 networks:
+  pihole_bridge:
+    driver: bridge
   macvlan:
     name: pi0vlan
     driver: macvlan
