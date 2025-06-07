@@ -40,7 +40,7 @@ jobs:
             echo "Ensuring settings (exit-node, hostname) are up-to-date..."
             # Redirect standard output to /dev/null to hide connection details on success.
             # Errors will still be printed.
-            sudo tailscale up --advertise-exit-node --hostname="rpi-docker-host" > /dev/null
+            sudo tailscale up --advertise-exit-node --hostname=rpi-docker-host --accept-dns=false > /dev/null
           else
             echo "Tailscale not running or not authenticated. Attempting to bring up..."
 
