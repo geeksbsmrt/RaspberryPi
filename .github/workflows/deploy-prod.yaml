@@ -19,6 +19,56 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check for Tailscale and Install if Missing
+        run: |
+          # This step is already quiet, no changes needed.
+          if command -v tailscale &> /dev/null
+          then
+              echo "Tailscale is already installed. Skipping installation."
+          else
+              echo "Tailscale not found. Installing..."
+              curl -fsSL https://tailscale.com/install.sh | sudo sh
+          fi
+
+      - name: Ensure Tailscale is Up and Registered
+        env:
+          TS_AUTH_KEY: ${{ secrets.TAILSCALE_AUTH_KEY }}
+        run: |
+          # The 'sudo tailscale status' check is already silent with &> /dev/null
+          if sudo tailscale status &> /dev/null; then
+            echo "Tailscale is already running and authenticated."
+            echo "Ensuring settings (exit-node, hostname) are up-to-date..."
+            # Redirect standard output to /dev/null to hide connection details on success.
+            # Errors will still be printed.
+            sudo tailscale up --advertise-exit-node --hostname="rpi-docker-host" > /dev/null
+          else
+            echo "Tailscale not running or not authenticated. Attempting to bring up..."
+
+            if [ -z "$TS_AUTH_KEY" ]; then
+              echo "::error::TAILSCALE_AUTH_KEY secret is not set in GitHub repository settings. Cannot perform initial authentication."
+              exit 1
+            fi
+
+            # Check the exit code for error handling, but redirect stdout to hide sensitive output on success.
+            if ! sudo tailscale up --authkey="${TS_AUTH_KEY}" --advertise-exit-node --hostname="rpi-docker-host" > /dev/null; then
+              echo "::error::Failed to bring Tailscale up. The TAILSCALE_AUTH_KEY may be invalid, expired, or already used."
+              exit 1
+            fi
+            echo "Tailscale brought up and authenticated successfully."
+          fi
+
+      - name: Verify Tailscale Connection Silently
+        # This step replaces the previous "Check Final Tailscale Status"
+        # to confirm success without printing IPs.
+        run: |
+          echo "Verifying Tailscale is active..."
+          if sudo tailscale status &> /dev/null; then
+            echo "✅ Tailscale is active and connected."
+          else
+            echo "::error::Tailscale is not connected after setup attempt."
+            exit 1
+          fi
+
       - name: Verify SOPS and age installation on runner
         run: |
           echo "Checking SOPS version..."
