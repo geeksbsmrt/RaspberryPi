@@ -19,6 +19,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify SOPS and age installation on runner
+        run: |
+          echo "Checking SOPS version..."
+          sops --version --check-for-updates
+          echo "Checking age version..."
+          age --version
+
+      - name: Decrypt secrets.sops.env to .env file on Pi
+        env:
+          SOPS_AGE_KEY: ${{ secrets.RUNNER_AGE_PRIVATE_KEY }}
+          TARGET_ENV_FILE: ${{ secrets.DOCKER_DIR }}/.env
+          # Using an intermediate env var for the target file path for clarity in the script
+        run: |
+          echo "Decrypting secrets from $GITHUB_WORKSPACE/secrets.sops.env to ${TARGET_ENV_FILE}"
+          sudo -E sops --decrypt "$GITHUB_WORKSPACE/secrets.sops.env" > "${TARGET_ENV_FILE}"
+          sudo -E chmod 600 "${TARGET_ENV_FILE}"
+          echo ".env file created at ${TARGET_ENV_FILE} with restricted permissions."
+
       - name: Check for Tailscale and Install if Missing
         run: |
           # This step is already quiet, no changes needed.
@@ -40,7 +58,7 @@ jobs:
             echo "Ensuring settings (exit-node, hostname) are up-to-date..."
             # Redirect standard output to /dev/null to hide connection details on success.
             # Errors will still be printed.
-            sudo tailscale up --advertise-exit-node --hostname=rpi-docker-host --accept-dns=false > /dev/null
+            sudo tailscale up --advertise-routes=${MACVLAN_SUBNET} --advertise-exit-node --hostname=rpi-docker-host --accept-dns=false > /dev/null
           else
             echo "Tailscale not running or not authenticated. Attempting to bring up..."
 
@@ -68,24 +86,6 @@ jobs:
             echo "::error::Tailscale is not connected after setup attempt."
             exit 1
           fi
-
-      - name: Verify SOPS and age installation on runner
-        run: |
-          echo "Checking SOPS version..."
-          sops --version --check-for-updates
-          echo "Checking age version..."
-          age --version
-
-      - name: Decrypt secrets.sops.env to .env file on Pi
-        env:
-          SOPS_AGE_KEY: ${{ secrets.RUNNER_AGE_PRIVATE_KEY }}
-          TARGET_ENV_FILE: ${{ secrets.DOCKER_DIR }}/.env
-          # Using an intermediate env var for the target file path for clarity in the script
-        run: |
-          echo "Decrypting secrets from $GITHUB_WORKSPACE/secrets.sops.env to ${TARGET_ENV_FILE}"
-          sudo -E sops --decrypt "$GITHUB_WORKSPACE/secrets.sops.env" > "${TARGET_ENV_FILE}"
-          sudo -E chmod 600 "${TARGET_ENV_FILE}"
-          echo ".env file created at ${TARGET_ENV_FILE} with restricted permissions."
 
       - name: Prepare Docker Configurations (Template Configs)
         env:
