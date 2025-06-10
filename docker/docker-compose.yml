@@ -1,4 +1,23 @@
 services:
+  cloudflare_ddns:
+    image: favonia/cloudflare-ddns:latest # This is the official image, it supports ARM64
+    container_name: cloudflare_ddns
+    hostname: cloudflare_ddns
+    restart: unless-stopped
+    environment:
+      # --- Cloudflare Credentials ---
+      - CF_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+
+      # --- Domains to Update ---
+      - DOMAINS=${CF_DDNS_DOMAINS}
+
+      # --- Other Settings ---
+      - PROXIED=${CF_DDNS_PROXIED}
+      - IP4_PROVIDER=cloudflare.com
+      - IP6_PROVIDER=none
+      - UPDATE_CRON=@every 5m
+      - TZ="America/New_York"
+
   pihole:
     container_name: pihole
     image: pihole/pihole:latest
@@ -23,7 +42,7 @@ services:
       FTLCONF_dhcp_ipv6: "true"
     volumes:
       - "./pihole:/etc/pihole"
-      #- './etc-dnsmasq.d:/etc/dnsmasq.d'
+      - "./pihole/dnsmasq.d:/etc/dnsmasq.d:ro"
     cap_add:
       - NET_ADMIN
       - SYS_TIME
