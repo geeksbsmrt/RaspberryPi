@@ -6,16 +6,15 @@ services:
     restart: unless-stopped
     environment:
       # --- Cloudflare Credentials ---
-      - CF_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
 
       # --- Domains to Update ---
       - DOMAINS=${CF_DDNS_DOMAINS}
 
       # --- Other Settings ---
       - PROXIED=${CF_DDNS_PROXIED}
-      - IP4_PROVIDER=cloudflare.com
-      - IP6_PROVIDER=none
       - UPDATE_CRON=@every 5m
+      - IP6_PROVIDER=none
       - TZ="America/New_York"
 
   pihole:

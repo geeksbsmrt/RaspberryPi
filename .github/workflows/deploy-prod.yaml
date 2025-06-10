@@ -101,11 +101,18 @@ jobs:
           fi
           set +a
 
+          # --- PiHole DNSMasq ---
+          DNSMASQ_TEMPLATE_PATH="$GITHUB_WORKSPACE/docker/pihole/dnsmasq.d/05-custom-wildcards.conf.template"
+          DNSMASQ_OUTPUT_PATH="$GITHUB_WORKSPACE/docker/pihole/dnsmasq.d/05-custom-wildcards.conf"
+          echo "Templating custom dnsmasq configuration..."
+          # Ensure envsubst is available on the runner (it should be)
+          envsubst < "${DNSMASQ_TEMPLATE_PATH}" > "${DNSMASQ_OUTPUT_PATH}"
+          echo "dnsmasq configuration templated."
+
+          # --- Prometheus ---
           # Define input and output paths using GITHUB_WORKSPACE directly
           INPUT_TEMPLATE_PATH="$GITHUB_WORKSPACE/docker/prometheus/config/prometheus.yml.template"
           OUTPUT_PROCESSED_PATH="$GITHUB_WORKSPACE/docker/prometheus/config/prometheus.yml"
-
-          # --- Prometheus ---
           echo "Templating Prometheus configuration..."
           echo "Input template: ${INPUT_TEMPLATE_PATH}"
           echo "Output file: ${OUTPUT_PROCESSED_PATH}"
