@@ -14,11 +14,14 @@
 # Global Imports
 (all) {
 	handle_errors {
-        rewrite * /404.html
-        file_server {
-            status 404
-        }
+        respond "{err.status_code} {err.status_text}"
     }
+	# handle_errors {
+    #     rewrite * /404.html
+    #     file_server {
+    #         status 404
+    #     }
+    # }
 }
 
 # Default options for internal facing sites

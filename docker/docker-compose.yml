@@ -56,7 +56,7 @@ services:
       macvlan:
         ipv4_address: ${IP_UNBOUND}
     volumes:
-      - "./unbound:/opt/unbound/etc/unbound:ro"
+      - "./unbound:/opt/unbound/etc/unbound"
     restart: unless-stopped
 
   caddy:
