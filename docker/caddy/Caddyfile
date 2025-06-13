@@ -46,13 +46,13 @@
 
 grafana.home {
     import home
-    import logging grafana.home
+    # import logging grafana.home
     reverse_proxy http://{$IP_GRAFANA}:3000
 }
 
 uptime.home {
     import home
-    import logging uptime.home
+    # import logging uptime.home
     reverse_proxy http://{$IP_UPTIME_KUMA}:3001
 }
 
@@ -84,19 +84,19 @@ uptime.home {
 
 geeksbsmrt.com {
     import geeksbsmrt
-    import logging geeksbsmrt.com
+    # import logging geeksbsmrt.com
     root * /srv/geeksbsmrt.com
 }
 
 analytics.geeksbsmrt.com {
     import geeksbsmrt
-    import logging analytics.geeksbsmrt.com
+    # import logging analytics.geeksbsmrt.com
     reverse_proxy http://{$IP_UMAMI_APP}:3000
 }
 
 *.geeksbsmrt.com {
     import geeksbsmrt
-    import logging wildcard.geeksbsmrt.com
+    # import logging wildcard.geeksbsmrt.com
 }
 
 (smrtgeekdevs) {
@@ -105,13 +105,13 @@ analytics.geeksbsmrt.com {
 
 smrtgeekdevs.com {
     import smrtgeekdevs # Inherit `external` config here
-    import logging smrtgeekdevs.com
+    # import logging smrtgeekdevs.com
     #root * /var/www/smrtgeekdevs
 }
 
 pihole.smrtgeekdevs.com {
     import smrtgeekdevs
-    import logging pihole.smrtgeekdevs.com
+    # import logging pihole.smrtgeekdevs.com
     @atRoot {
         path /
     }
@@ -122,5 +122,5 @@ pihole.smrtgeekdevs.com {
 
 *.smrtgeekdevs.com {
     import smrtgeekdevs
-    import logging wildcard.smrtgeekdevs.com
+    # import logging wildcard.smrtgeekdevs.com
 }
