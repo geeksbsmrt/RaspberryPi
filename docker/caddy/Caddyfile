@@ -29,7 +29,7 @@
     import logging
 
 	handle_errors {
-        @4xx status 400-499
+        @4xx expression {http.error.status_code} >= 400 && {http.error.status_code} < 500
         rewrite @4xx /error-pages/404.html
 
         rewrite * /error-pages/5xx.html
@@ -39,7 +39,7 @@
         }
 
         file_server {
-            root /etc/caddy
+            root /srv
         }
     }
 }
