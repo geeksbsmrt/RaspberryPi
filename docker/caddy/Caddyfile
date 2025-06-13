@@ -11,17 +11,37 @@
 	}
 }
 
+(logging) {
+    log {
+        output file /data/logs/{http.request.host}.log {
+            roll_size 10mb
+            roll_keep 5
+            roll_local_time
+        }
+        format console
+        level INFO
+    }
+}
+
 # Global Imports
 (all) {
+
+    import logging
+
 	handle_errors {
-        respond "{err.status_code} {err.status_text}"
+        @4xx status 400-499
+        rewrite @4xx /error-pages/404.html
+
+        rewrite * /error-pages/5xx.html
+
+        template {
+            mime text/html
+        }
+
+        file_server {
+            root /etc/caddy
+        }
     }
-	# handle_errors {
-    #     rewrite * /404.html
-    #     file_server {
-    #         status 404
-    #     }
-    # }
 }
 
 # Default options for internal facing sites
@@ -98,32 +118,8 @@ pihole.smrtgeekdevs.com {
     }
     redir @atRoot /admin/ 302
 
-    # Update your reverse_proxy block to look like this:
-    reverse_proxy http://{$IP_PIHOLE} {
-        # Caddy v2 usually does this automatically, but we'll be explicit
-        # to ensure WebSocket upgrade headers are passed correctly.
-        header_up Host {http.request.host}
-        header_up X-Real-IP {http.request.remote.host}
-        header_up X-Forwarded-For {http.request.remote.host}
-        header_up X-Forwarded-Proto {http.request.scheme}
-    }
-
-    log {
-        output file /data/logs/pihole.smrtgeekdevs.com.log {
-            roll_size 10mb
-            roll_keep 5
-            roll_local_time
-        }
-        format console
-    }
+    reverse_proxy http://{$IP_PIHOLE}
 }
-
-# pihole.smrtgeekdevs.com {
-# 	import smrtgeekdevs
-
-# 	redir / /admin{uri}
-#     reverse_proxy pihole
-# }
 
 *.smrtgeekdevs.com {
 	import smrtgeekdevs
