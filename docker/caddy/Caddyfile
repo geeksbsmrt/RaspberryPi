@@ -13,7 +13,7 @@
 
 (logging) {
     log {
-        output file /data/logs/{http.request.host}.log {
+        output file /data/logs/{request.host}.log {
             roll_size 10mb
             roll_keep 5
             roll_local_time
@@ -29,7 +29,7 @@
     import logging
 
 	handle_errors {
-        @4xx expression {http.error.status_code} >= 400 && {http.error.status_code} < 500
+        @4xx expression {error.status_code} >= 400 && {error.status_code} < 500
         rewrite @4xx /error-pages/404.html
 
         rewrite * /error-pages/5xx.html
