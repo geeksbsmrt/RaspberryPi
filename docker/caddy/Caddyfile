@@ -34,12 +34,9 @@
 
         rewrite * /error-pages/5xx.html
 
-        template {
-            mime text/html
-        }
-
         file_server {
             root /srv
+            templates
         }
     }
 }
