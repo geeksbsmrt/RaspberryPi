@@ -2,18 +2,18 @@
 # https://caddyserver.com/docs/caddyfile
 
 {
-	# Global options
+    # Global options
 
-	# Monitoring
-	admin :2019
-	metrics {
-		per_host
-	}
+    # Monitoring
+    admin :2019
+    metrics {
+        per_host
+    }
 }
 
 (logging) {
     log {
-        output file /data/logs/{http.request.host}.log {
+        output file /data/logs/{args.0}.log {
             roll_size 10mb
             roll_keep 5
             roll_local_time
@@ -25,7 +25,7 @@
 
 # Global Imports
 (all) {
-	handle_errors {
+    handle_errors {
         @4xx expression {error.status_code} >= 400 && {error.status_code} < 500
         rewrite @4xx /error-pages/404.html
 
@@ -40,77 +40,78 @@
 
 # Default options for internal facing sites
 (home) {
-	import all
-	tls internal
+    import all
+    tls internal
 }
 
 grafana.home {
-	import home
-    import logging
-	reverse_proxy http://{$IP_GRAFANA}:3000
+    import home
+    import logging grafana.home
+    reverse_proxy http://{$IP_GRAFANA}:3000
 }
 
 uptime.home {
-	import home
-    import logging
-	reverse_proxy http://{$IP_UPTIME_KUMA}:3001
+    import home
+    import logging uptime.home
+    reverse_proxy http://{$IP_UPTIME_KUMA}:3001
 }
 
 # Default options for external facing sites
 (external) {
-	import all
+    import all
 
-	tls {
+    tls {
         dns cloudflare {env.CLOUDFLARE_API_TOKEN}
     }
 
-	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-		X-Xss-Protection "1; mode=block"
-		X-Content-Type-Options "nosniff"
-		X-Frame-Options "DENY"
-		Content-Security-Policy "upgrade-insecure-requests"
-		Referrer-Policy "strict-origin-when-cross-origin"
-		Cache-Control "public, max-age=15, must-revalidate"
-		Permissions-Policy "accelerometer=(), ambient-light-sensor=(), autoplay=(self), camera=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(*), speaker-selection=(), usb=(), xr-spatial-tracking=()"
-		[defer]
-	}
-	file_server
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Xss-Protection "1; mode=block"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Content-Security-Policy "upgrade-insecure-requests"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Cache-Control "public, max-age=15, must-revalidate"
+        Permissions-Policy "accelerometer=(), ambient-light-sensor=(), autoplay=(self), camera=(), encrypted-media=(), fullscreen=(self), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(*), speaker-selection=(), usb=(), xr-spatial-tracking=()"
+        [defer]
+    }
+    file_server
 }
 
 (geeksbsmrt) {
-	import external
+    import external
 }
 
 geeksbsmrt.com {
-	import geeksbsmrt
-    import logging
+    import geeksbsmrt
+    import logging geeksbsmrt.com
     root * /srv/geeksbsmrt.com
 }
 
 analytics.geeksbsmrt.com {
     import geeksbsmrt
-    import logging
+    import logging analytics.geeksbsmrt.com
     reverse_proxy http://{$IP_UMAMI_APP}:3000
 }
 
 *.geeksbsmrt.com {
-	import geeksbsmrt
-    import logging
+    import geeksbsmrt
+    import logging wildcard.geeksbsmrt.com
 }
 
 (smrtgeekdevs) {
-	import external
+    import external
 }
 
 smrtgeekdevs.com {
-    import logging
-	#root * /var/www/smrtgeekdevs
+    import smrtgeekdevs # Inherit `external` config here
+    import logging smrtgeekdevs.com
+    #root * /var/www/smrtgeekdevs
 }
 
 pihole.smrtgeekdevs.com {
     import smrtgeekdevs
-    import logging
+    import logging pihole.smrtgeekdevs.com
     @atRoot {
         path /
     }
@@ -120,6 +121,6 @@ pihole.smrtgeekdevs.com {
 }
 
 *.smrtgeekdevs.com {
-	import smrtgeekdevs
-    import logging
+    import smrtgeekdevs
+    import logging wildcard.smrtgeekdevs.com
 }
