@@ -91,11 +91,39 @@ smrtgeekdevs.com {
 }
 
 pihole.smrtgeekdevs.com {
-	import smrtgeekdevs
+    import smrtgeekdevs
 
-	redir / /admin{uri}
-    reverse_proxy pihole
+    @atRoot {
+        path /
+    }
+    redir @atRoot /admin/ 302
+
+    # Update your reverse_proxy block to look like this:
+    reverse_proxy http://{$IP_PIHOLE} {
+        # Caddy v2 usually does this automatically, but we'll be explicit
+        # to ensure WebSocket upgrade headers are passed correctly.
+        header_up Host {http.request.host}
+        header_up X-Real-IP {http.request.remote.host}
+        header_up X-Forwarded-For {http.request.remote.host}
+        header_up X-Forwarded-Proto {http.request.scheme}
+    }
+
+    log {
+        output file /data/logs/pihole.smrtgeekdevs.com.log {
+            roll_size 10mb
+            roll_keep 5
+            roll_local_time
+        }
+        format console
+    }
 }
+
+# pihole.smrtgeekdevs.com {
+# 	import smrtgeekdevs
+
+# 	redir / /admin{uri}
+#     reverse_proxy pihole
+# }
 
 *.smrtgeekdevs.com {
 	import smrtgeekdevs
