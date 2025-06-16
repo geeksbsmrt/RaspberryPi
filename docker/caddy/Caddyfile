@@ -13,7 +13,7 @@
 
 (logging) {
     log {
-        output file /data/logs/{args.0}.log {
+        output file /data/logs/{args[0]}.log {
             roll_size 10mb
             roll_keep 5
             roll_local_time
