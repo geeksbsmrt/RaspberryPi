@@ -27,14 +27,24 @@
 (all) {
     handle_errors {
         @4xx expression {error.status_code} >= 400 && {error.status_code} < 500
-        rewrite @4xx /error-pages/404.html
+        handle @4xx {
+            root * /srv
+            file_server /error-pages/404.html
+        }
 
-        rewrite * /error-pages/5xx.html
+        # Handle 5xx errors
+        @5xx expression {error.status_code} >= 500 && {error.status_code} < 600
+        handle @5xx {
+            root * /srv
+            file_server /error-pages/5xx.html
+        }
+
+        # handle {
+        #     root * /srv
+        #     file_server /error-pages/default.html
+        # }
 
         templates
-        file_server {
-            root /srv
-        }
     }
 }
 
