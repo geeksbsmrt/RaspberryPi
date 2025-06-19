@@ -33,7 +33,7 @@
             status {error.status_code} # Keep the specific status code Caddy generated
             rewrite * /404.html # Serve the dynamic 404 page
             templates
-            file_server { root /srv/error-pages }
+            file_server {root /srv/error-pages}
         }
 
         # Catch all 5xx errors and serve the dynamic 5xx.html page
@@ -42,7 +42,7 @@
             status {error.status_code} # Keep the specific status code Caddy generated
             rewrite * /5xx.html # Serve the dynamic 5xx page
             templates
-            file_server { root /srv/error-pages }
+            file_server {root /srv/error-pages}
         }
     }
 
@@ -54,7 +54,7 @@
             status {http.response.status_code} # Use the upstream's specific status code
             rewrite * /404.html # Serve the dynamic 404 page
             templates
-            file_server { root /srv/error-pages }
+            file_server {root /srv/error-pages}
         }
 
         # Catch all 5xx errors from upstream and serve the dynamic 5xx.html page
@@ -63,7 +63,7 @@
             status {http.response.status_code} # Use the upstream's specific status code
             rewrite * /5xx.html # Serve the dynamic 5xx page
             templates
-            file_server { root /srv/error-pages }
+            file_server {root /srv/error-pages}
         }
     }
 }
