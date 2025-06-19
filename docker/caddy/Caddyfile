@@ -44,23 +44,6 @@
             file_server
         }
     }
-
-    # Error handling for upstream (reverse_proxy) responses
-    handle_response {
-        @upstream_4xx status 400-499
-        handle @upstream_4xx {
-            root * /srv/error-pages
-            rewrite * /4xx.html
-            file_server
-        }
-
-        @upstream_5xx status 500-599
-        handle @upstream_5xx {
-            root * /srv/error-pages
-            rewrite * /5xx.html
-            file_server
-        }
-    }
 }
 
 # Default options for internal facing sites
