@@ -25,39 +25,42 @@
 
 # Global Imports
 (all) {
-    # Enable templates for the entire scope, so error pages can be processed dynamically
+    # Enable templates for dynamic error pages
     templates
 
-    # Caddy-generated error handling (e.g., from file_server directives)
+    # Error handling for Caddy-generated errors
     handle_errors {
-    @4xx expression {error.status_code} >= 400 && {error.status_code} < 500
-    handle @4xx {
-        rewrite * /4xx.html
-        file_server
+        @4xx expression {error.status_code} >= 400 && {error.status_code} < 500
+        handle @4xx {
+            root * /srv/error-pages
+            rewrite * /4xx.html
+            file_server
+        }
+
+        @5xx expression {error.status_code} >= 500 && {error.status_code} < 600
+        handle @5xx {
+            root * /srv/error-pages
+            rewrite * /5xx.html
+            file_server
+        }
     }
 
-    @5xx expression {error.status_code} >= 500 && {error.status_code} < 600
-    handle @5xx {
-        rewrite * /5xx.html
-        file_server
-    }
-}
-
-    # Upstream-generated error handling (for reverse_proxy directives)
+    # Error handling for upstream (reverse_proxy) responses
     handle_response {
-    @upstream_4xx status 400-499
-    handle @upstream_4xx {
-        rewrite * /4xx.html
-        file_server
-    }
+        @upstream_4xx status 400-499
+        handle @upstream_4xx {
+            root * /srv/error-pages
+            rewrite * /4xx.html
+            file_server
+        }
 
-    @upstream_5xx status 500-599
-    handle @upstream_5xx {
-        rewrite * /5xx.html
-        file_server
+        @upstream_5xx status 500-599
+        handle @upstream_5xx {
+            root * /srv/error-pages
+            rewrite * /5xx.html
+            file_server
+        }
     }
-}
-
 }
 
 # Default options for internal facing sites
