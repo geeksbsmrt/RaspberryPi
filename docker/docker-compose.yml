@@ -64,11 +64,17 @@ services:
     hostname: caddy
     image: ghcr.io/caddybuilds/caddy-cloudflare:latest
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       macvlan:
         ipv4_address: ${IP_CADDY}
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy/error-pages:/opt/caddy-error-pages:ro
       - /srv:/srv
       - caddy_data:/data
       - caddy_config:/config

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Error {{placeholder "http.error.status_code"}} - {{placeholder "http.error.status_text"}}</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 40px;
+            background-color: #f8f9fa;
+            color: #343a40;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #dc3545;
+        }
+
+        p.error-detail {
+            font-size: 1.1em;
+            color: #6c757d;
+        }
+
+        code {
+            background-color: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Error {{placeholder "http.error.status_code"}} - {{placeholder "http.error.status_text"}}</h1>
+        <p class="error-detail">
+            {{if ge (atoi (placeholder "http.error.status_code")) 500}}
+            We’re experiencing some internal trouble. Please try again later.
+            {{else if ge (atoi (placeholder "http.error.status_code")) 400}}
+            The page you're looking for doesn't exist or your request was invalid.
+            {{else}}
+            An unexpected issue occurred.
+            {{end}}
+        </p>
+        {{ with placeholder "http.error.message" }}
+        <p><strong>Details:</strong> <code>{{.}}</code></p>
+        {{ end }}
+        <p><a href="/">Return to Homepage</a></p>
+    </div>
+</body>
+
+</html>
