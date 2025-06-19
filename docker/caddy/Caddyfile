@@ -32,14 +32,14 @@
     handle_errors {
         @4xx expression {error.status_code} >= 400 && {error.status_code} < 500
         handle @4xx {
-            root * /srv/error-pages
+            root * /opt/error-pages
             rewrite * /4xx.html
             file_server
         }
 
         @5xx expression {error.status_code} >= 500 && {error.status_code} < 600
         handle @5xx {
-            root * /srv/error-pages
+            root * /opt/error-pages
             rewrite * /5xx.html
             file_server
         }
