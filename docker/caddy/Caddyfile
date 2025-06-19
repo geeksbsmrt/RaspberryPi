@@ -30,7 +30,7 @@
     # Error handling for Caddy-generated errors
     handle_errors {
         root * /opt/caddy-error-pages
-        rewrite * /error.html
+        rewrite * /generic.html
         templates
         file_server
     }
