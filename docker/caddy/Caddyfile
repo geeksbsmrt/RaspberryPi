@@ -30,19 +30,10 @@
 
     # Error handling for Caddy-generated errors
     handle_errors {
-        @4xx status 400-499
-        handle @4xx {
-            root * /opt/caddy-error-pages
-            rewrite * /4xx.html
-            file_server
-        }
+        root * /opt/caddy-error-pages
 
-        @5xx status 500-599
-        handle @5xx {
-            root * /opt/caddy-error-pages
-            rewrite * /5xx.html
-            file_server
-        }
+        rewrite * /error.html
+        file_server
     }
 }
 

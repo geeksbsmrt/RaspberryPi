@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>{{.Error.status_code}} {{.Error.status_text}}</title>
+    <title>{{ .StatusCode }} {{ .StatusText }}</title>
     <style>
         body {
             font-family: sans-serif;
@@ -23,7 +23,7 @@
         }
 
         h1 {
-            color: #ffc107;
+            color: #dc3545;
         }
 
         p.error-detail {
@@ -35,22 +35,27 @@
             background-color: #e9ecef;
             padding: 2px 6px;
             border-radius: 4px;
+            font-family: monospace;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>Oops! Error {{.Error.status_code}} - {{.Error.status_text}}</h1>
-        <p class="error-detail">A server error occurred and we have been notified. Our administrator will look into it.
-        </p>
-        {{- if .Error.ID }}
-        <p>If you need to report this issue, please provide the following Error ID:</p>
-        <p><strong>Error ID:</strong> <code>{{.Error.ID}}</code></p>
-        {{- end }}
-        {{- if .Error.msg }}
-        <p><strong>Details:</strong> <code>{{.Error.msg}}</code></p>
-        {{- end }}
+        <h1>Error {{ .StatusCode }} - {{ .StatusText }}</h1>
+
+        {{ if ge .StatusCode 500 }}
+        <p class="error-detail">We're experiencing some internal trouble. Please try again later.</p>
+        {{ else if ge .StatusCode 400 }}
+        <p class="error-detail">The page you're looking for doesn't exist or your request was invalid.</p>
+        {{ else }}
+        <p class="error-detail">An unexpected issue occurred.</p>
+        {{ end }}
+
+        {{ if .Error }}
+        <p><strong>Details:</strong> <code>{{ .Error }}</code></p>
+        {{ end }}
+
         <p><a href="/">Return to Homepage</a></p>
     </div>
 </body>
