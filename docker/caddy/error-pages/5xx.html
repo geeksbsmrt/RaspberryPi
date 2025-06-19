@@ -1,22 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
-    <title>Server Error</title>
+    <title>{{.Error.status_code}} {{.Error.status_text}}</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 40px; background-color: #f8f9fa; color: #343a40; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1 { color: #ffc107; }
-        code { background-color: #e9ecef; padding: 2px 6px; border-radius: 4px; }
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 40px;
+            background-color: #f8f9fa;
+            color: #343a40;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #ffc107;
+        }
+
+        p.error-detail {
+            font-size: 1.1em;
+            color: #6c757d;
+        }
+
+        code {
+            background-color: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
-        <h1>Oops! Something Went Wrong</h1>
-        <p>A server error occurred and we have been notified. Our administrator will look into it.</p>
+        <h1>Oops! Error {{.Error.status_code}} - {{.Error.status_text}}</h1>
+        <p class="error-detail">A server error occurred and we have been notified. Our administrator will look into it.
+        </p>
+        {{- if .Error.ID }}
         <p>If you need to report this issue, please provide the following Error ID:</p>
         <p><strong>Error ID:</strong> <code>{{.Error.ID}}</code></p>
+        {{- end }}
+        {{- if .Error.msg }}
+        <p><strong>Details:</strong> <code>{{.Error.msg}}</code></p>
+        {{- end }}
         <p><a href="/">Return to Homepage</a></p>
     </div>
 </body>
+
 </html>

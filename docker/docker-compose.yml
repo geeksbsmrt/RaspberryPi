@@ -74,7 +74,7 @@ services:
         ipv4_address: ${IP_CADDY}
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
-      - ./caddy/error-pages:/etc/caddy/error-pages:ro
+      - ./caddy/error-pages:/srv/error-pages:ro
       - /srv:/srv
       - caddy_data:/data
       - caddy_config:/config

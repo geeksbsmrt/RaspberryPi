@@ -25,26 +25,46 @@
 
 # Global Imports
 (all) {
+    # Caddy-generated error handling (e.g., from file_server)
     handle_errors {
+        # Catch all 4xx errors and serve the dynamic 404.html page
         @4xx expression {error.status_code} >= 400 && {error.status_code} < 500
         handle @4xx {
-            root * /srv
-            file_server /error-pages/404.html
+            status {error.status_code} # Keep the specific status code Caddy generated
+            rewrite * /404.html # Serve the dynamic 404 page
+            templates
+            file_server { root /srv/error-pages }
         }
 
-        # Handle 5xx errors
+        # Catch all 5xx errors and serve the dynamic 5xx.html page
         @5xx expression {error.status_code} >= 500 && {error.status_code} < 600
         handle @5xx {
-            root * /srv
-            file_server /error-pages/5xx.html
+            status {error.status_code} # Keep the specific status code Caddy generated
+            rewrite * /5xx.html # Serve the dynamic 5xx page
+            templates
+            file_server { root /srv/error-pages }
+        }
+    }
+
+    # Upstream-generated error handling for reverse_proxy
+    handle_response {
+        # Catch all 4xx errors from upstream and serve the dynamic 404.html page
+        @upstream_4xx status 400-499
+        handle @upstream_4xx {
+            status {http.response.status_code} # Use the upstream's specific status code
+            rewrite * /404.html # Serve the dynamic 404 page
+            templates
+            file_server { root /srv/error-pages }
         }
 
-        # handle {
-        #     root * /srv
-        #     file_server /error-pages/default.html
-        # }
-
-        templates
+        # Catch all 5xx errors from upstream and serve the dynamic 5xx.html page
+        @upstream_5xx status 500-599
+        handle @upstream_5xx {
+            status {http.response.status_code} # Use the upstream's specific status code
+            rewrite * /5xx.html # Serve the dynamic 5xx page
+            templates
+            file_server { root /srv/error-pages }
+        }
     }
 }
 
