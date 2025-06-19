@@ -44,9 +44,9 @@
     <div class="container">
         <h1>Error {{placeholder "http.error.status_code"}} - {{placeholder "http.error.status_text"}}</h1>
         <p class="error-detail">
-            {{if ge (placeholder "http.error.status_code") 500}}
+            {{if ge (atoi (placeholder "http.error.status_code")) 500}}
             We’re experiencing some internal trouble. Please try again later.
-            {{else if ge (placeholder "http.error.status_code") 400}}
+            {{else if ge (atoi (placeholder "http.error.status_code")) 400}}
             The page you're looking for doesn't exist or your request was invalid.
             {{else}}
             An unexpected issue occurred.
