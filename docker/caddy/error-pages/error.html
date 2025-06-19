@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>{{ .StatusCode }} {{ .StatusText }}</title>
+    <title>{{ .Error.StatusCode }} {{ .Error.StatusText }}</title>
     <style>
         body {
             font-family: sans-serif;
@@ -42,11 +42,11 @@
 
 <body>
     <div class="container">
-        <h1>Error {{ .StatusCode }} - {{ .StatusText }}</h1>
+        <h1>Error {{ .Error.StatusCode }} - {{ .Error.StatusText }}</h1>
 
-        {{ if ge .StatusCode 500 }}
+        {{ if ge .Error.StatusCode 500 }}
         <p class="error-detail">We're experiencing some internal trouble. Please try again later.</p>
-        {{ else if ge .StatusCode 400 }}
+        {{ else if ge .Error.StatusCode 400 }}
         <p class="error-detail">The page you're looking for doesn't exist or your request was invalid.</p>
         {{ else }}
         <p class="error-detail">An unexpected issue occurred.</p>
