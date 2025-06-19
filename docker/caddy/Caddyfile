@@ -30,43 +30,34 @@
 
     # Caddy-generated error handling (e.g., from file_server directives)
     handle_errors {
-        # Catch all 4xx errors
-        @4xx expression {error.status_code} >= 400 && {error.status_code} < 500
-        handle @4xx {
-            # Use 'respond' to set the status code and serve the templated error page
-            respond {error.status_code} {
-                body @/srv/error-pages/404.html # Serve the content of 404.html as the body
-            }
-        }
-
-        # Catch all 5xx errors
-        @5xx expression {error.status_code} >= 500 && {error.status_code} < 600
-        handle @5xx {
-            respond {error.status_code} {
-                body @/srv/error-pages/5xx.html # Serve the content of 5xx.html as the body
-            }
-        }
+    @4xx expression {error.status_code} >= 400 && {error.status_code} < 500
+    handle @4xx {
+        rewrite * /4xx.html
+        file_server
     }
+
+    @5xx expression {error.status_code} >= 500 && {error.status_code} < 600
+    handle @5xx {
+        rewrite * /5xx.html
+        file_server
+    }
+}
 
     # Upstream-generated error handling (for reverse_proxy directives)
     handle_response {
-        # Catch all 4xx errors from the upstream
-        @upstream_4xx status 400-499
-        handle @upstream_4xx {
-            # Use 'respond' to set the status code from the upstream response and serve the error page
-            respond {http.response.status_code} {
-                body @/srv/error-pages/404.html # Serve the content of 404.html as the body
-            }
-        }
-
-        # Catch all 5xx errors from the upstream
-        @upstream_5xx status 500-599
-        handle @upstream_5xx {
-            respond {http.response.status_code} {
-                body @/srv/error-pages/5xx.html # Serve the content of 5xx.html as the body
-            }
-        }
+    @upstream_4xx status 400-499
+    handle @upstream_4xx {
+        rewrite * /4xx.html
+        file_server
     }
+
+    @upstream_5xx status 500-599
+    handle @upstream_5xx {
+        rewrite * /5xx.html
+        file_server
+    }
+}
+
 }
 
 # Default options for internal facing sites
