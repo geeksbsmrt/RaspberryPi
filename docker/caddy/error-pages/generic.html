@@ -7,9 +7,9 @@
 
 <body>
     <h1>Error Page Debug</h1>
-    <p>StatusCode: {{ .Error.StatusCode }}</p>
-    <p>StatusText: {{ .Error.StatusText }}</p>
-    <p>Message: {{ .Error.Message }}</p>
+    <p>StatusCode: {{ http.error.status_code }}</p>
+    <p>StatusText: {{ http.error.status_text }}</p>
+    <p>Message: {{ http.error.message }}</p>
     <pre>Full Context: {{ printf "%#v" . }}</pre>
 </body>
 
