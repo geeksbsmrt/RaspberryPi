@@ -47,6 +47,9 @@ services:
       - SYS_TIME
       - SYS_NICE
     restart: unless-stopped
+    depends_on:
+      unbound:
+        condition: service_healthy
 
   unbound:
     container_name: unbound
