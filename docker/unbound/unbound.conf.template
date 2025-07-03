@@ -74,3 +74,9 @@ server:
     access-control: ${IP_PIHOLE}/32 allow
     access-control: ${IP_BLACKBOX}/32 allow
     access-control: 0.0.0.0/0 refuse
+
+    # Enable unbound-control
+    remote-control:
+        control-enable: yes
+        control-interface: 127.0.0.1
+        control-port: 8953
