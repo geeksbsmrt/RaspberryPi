@@ -11,6 +11,11 @@
     }
 }
 
+# Health check
+:8081 {
+    respond /health 200
+}
+
 (logging) {
     log {
         output file /data/logs/{args[0]}.log {

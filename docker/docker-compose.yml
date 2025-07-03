@@ -47,17 +47,34 @@ services:
       - SYS_TIME
       - SYS_NICE
     restart: unless-stopped
+    depends_on:
+      unbound:
+        condition: service_healthy
 
   unbound:
     container_name: unbound
     image: "mvance/unbound-rpi:latest"
     hostname: unbound
+    command: >
+      sh -c "
+        if [ ! -f /opt/unbound/etc/unbound/unbound_control.key ]; then
+          echo 'Generating Unbound control keys...';
+          unbound-control-setup -d /opt/unbound/etc/unbound;
+        fi &&
+        unbound -d -c /opt/unbound/etc/unbound/unbound.conf
+      "
     networks:
       macvlan:
         ipv4_address: ${IP_UNBOUND}
     volumes:
       - "./unbound:/opt/unbound/etc/unbound"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "unbound-control -c /opt/unbound/etc/unbound/unbound.conf status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   caddy:
     container_name: caddy
@@ -84,6 +101,12 @@ services:
       - IP_GRAFANA=${IP_GRAFANA}
       - IP_UPTIME_KUMA=${IP_UPTIME_KUMA}
       - IP_UMAMI_APP=${IP_UMAMI_APP}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "--tries=1", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   umami_db:
     image: postgres:alpine
@@ -122,6 +145,12 @@ services:
       APP_SECRET: ${UMAMI_APP_SECRET}
       TZ: "America/New_York"
       DISABLE_LOGIN: "false"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider --tries=1 http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # --- Monitoring Services ---
   prometheus:
@@ -140,6 +169,12 @@ services:
     networks:
       macvlan:
         ipv4_address: ${IP_PROMETHEUS}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider --tries=1 http://localhost:9090/-/healthy || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   grafana:
     image: grafana/grafana-oss:latest
@@ -157,6 +192,12 @@ services:
     networks:
       macvlan:
         ipv4_address: ${IP_GRAFANA}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider --tries=1 http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   rpi_node_exporter:
     image: prom/node-exporter:latest
@@ -174,6 +215,12 @@ services:
       - "--path.sysfs=/host/sys"
       - "--path.rootfs=/rootfs"
       - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider --tries=1 http://localhost:9100/metrics || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
@@ -204,6 +251,12 @@ services:
     networks:
       macvlan:
         ipv4_address: ${IP_BLACKBOX}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider --tries=1 http://localhost:9115 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   uptime_kuma:
     image: louislam/uptime-kuma:latest
