@@ -52,12 +52,26 @@ services:
     container_name: unbound
     image: "mvance/unbound-rpi:latest"
     hostname: unbound
+    command: >
+      sh -c "
+        if [ ! -f /opt/unbound/etc/unbound/unbound_control.key ]; then
+          echo 'Generating Unbound control keys...';
+          unbound-control-setup -d /opt/unbound/etc/unbound;
+        fi &&
+        unbound -d -c /opt/unbound/etc/unbound/unbound.conf
+      "
     networks:
       macvlan:
         ipv4_address: ${IP_UNBOUND}
     volumes:
       - "./unbound:/opt/unbound/etc/unbound"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "unbound-control -c /opt/unbound/etc/unbound/unbound.conf status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   caddy:
     container_name: caddy
