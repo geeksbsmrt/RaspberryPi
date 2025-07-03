@@ -101,6 +101,12 @@ services:
       - IP_GRAFANA=${IP_GRAFANA}
       - IP_UPTIME_KUMA=${IP_UPTIME_KUMA}
       - IP_UMAMI_APP=${IP_UMAMI_APP}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "--tries=1", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   umami_db:
     image: postgres:alpine
