@@ -251,6 +251,12 @@ services:
     networks:
       macvlan:
         ipv4_address: ${IP_BLACKBOX}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider --tries=1 http://localhost:9115 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   uptime_kuma:
     image: louislam/uptime-kuma:latest
