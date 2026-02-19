@@ -39,9 +39,10 @@ services:
       FTLCONF_dhcp_router: "${PIHOLE_DHCP_ROUTER}"
       FTLCONF_dhcp_leaseTime: "24h"
       FTLCONF_dhcp_ipv6: "true"
+      FTLCONF_dns_etc_dnsmasq_d: "true"
     volumes:
       - "./pihole:/etc/pihole"
-      - "./pihole/dnsmasq.d:/etc/dnsmasq.d:ro"
+      - "./pihole/dnsmasq.d/05-custom-wildcards.conf:/etc/dnsmasq.d/05-custom-wildcards.conf:ro"
     cap_add:
       - NET_ADMIN
       - SYS_TIME
@@ -70,7 +71,11 @@ services:
       - "./unbound:/opt/unbound/etc/unbound"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "unbound-control -c /opt/unbound/etc/unbound/unbound.conf status"]
+      test:
+        [
+          "CMD-SHELL",
+          "unbound-control -c /opt/unbound/etc/unbound/unbound.conf status",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -102,7 +107,15 @@ services:
       - IP_UPTIME_KUMA=${IP_UPTIME_KUMA}
       - IP_UMAMI_APP=${IP_UMAMI_APP}
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--spider", "--tries=1", "http://localhost:8081/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--spider",
+          "--tries=1",
+          "http://localhost:8081/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -144,9 +157,12 @@ services:
       DATABASE_TYPE: postgresql
       APP_SECRET: ${UMAMI_APP_SECRET}
       TZ: "America/New_York"
-      DISABLE_LOGIN: "false"
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --spider --tries=1 http://localhost:3000 || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --spider --tries=1 http://127.0.0.1:3000/api/heartbeat || exit 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -170,7 +186,11 @@ services:
       macvlan:
         ipv4_address: ${IP_PROMETHEUS}
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --spider --tries=1 http://localhost:9090/-/healthy || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --spider --tries=1 http://localhost:9090/-/healthy || exit 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -193,7 +213,11 @@ services:
       macvlan:
         ipv4_address: ${IP_GRAFANA}
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --spider --tries=1 http://localhost:3000/api/health || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --spider --tries=1 http://localhost:3000/api/health || exit 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -216,7 +240,11 @@ services:
       - "--path.rootfs=/rootfs"
       - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --spider --tries=1 http://localhost:9100/metrics || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --spider --tries=1 http://localhost:9100/metrics || exit 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -252,7 +280,11 @@ services:
       macvlan:
         ipv4_address: ${IP_BLACKBOX}
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --spider --tries=1 http://localhost:9115 || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --spider --tries=1 http://localhost:9115 || exit 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
