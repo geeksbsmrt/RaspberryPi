@@ -156,6 +156,7 @@ services:
       DATABASE_URL: postgresql://${UMAMI_DB_USER}:${UMAMI_DB_PASSWORD}@${IP_UMAMI_DB}:5432/${UMAMI_DB_NAME} # Uses Umami DB's parameterized IP
       DATABASE_TYPE: postgresql
       APP_SECRET: ${UMAMI_APP_SECRET}
+      IGNORE_IP: ${UMAMI_IGNORE_IP}
       TZ: "America/New_York"
     healthcheck:
       test:
