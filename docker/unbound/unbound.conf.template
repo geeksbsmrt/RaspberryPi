@@ -80,3 +80,14 @@ server:
         control-enable: yes
         control-interface: 127.0.0.1
         control-port: 8953
+
+    # Block HTTPS (TYPE65/ECH) records for local domains.
+    # Cloudflare publishes HTTPS records with ECH params for proxied domains. When
+    # PiHole returns local IPs for these domains, Chrome/Safari try to use those
+    # Cloudflare ECH params against the local server, causing ERR_SSL_PROTOCOL_ERROR.
+    # A 'static' zone returns NXDOMAIN for any RR type not explicitly defined via
+    # local-data. Since we define no local-data here, all TYPE65 queries get NXDOMAIN.
+    # A record lookups for these domains are handled upstream by PiHole (address=
+    # directives) and never reach Unbound, so this does not affect normal resolution.
+    local-zone: "geeksbsmrt.com." static
+    local-zone: "smrtgeekdevs.com." static
