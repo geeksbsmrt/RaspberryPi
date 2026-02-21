@@ -373,7 +373,7 @@ services:
     environment:
       - FIREFLY_III_URL=http://firefly_app:8080
       - VANITY_URL=https://firefly.geeksbsmrt.com
-      - APP_URL=https://import.firefly.geeksbsmrt.com
+      - APP_URL=https://import-firefly.geeksbsmrt.com
       - FIREFLY_III_ACCESS_TOKEN=${FIREFLY_IMPORTER_TOKEN}
       - TRUSTED_PROXIES=**
       - TZ="America/New_York"

@@ -102,9 +102,9 @@ firefly.geeksbsmrt.com {
     reverse_proxy http://{$IP_FIREFLY_APP}:8080
 }
 
-import.firefly.geeksbsmrt.com {
+import-firefly.geeksbsmrt.com {
     import geeksbsmrt
-    import logging import.firefly.geeksbsmrt.com
+    import logging import-firefly.geeksbsmrt.com
     reverse_proxy http://{$IP_FIREFLY_IMPORTER}:8080
 }
 
