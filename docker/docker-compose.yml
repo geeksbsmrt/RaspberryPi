@@ -1,17 +1,12 @@
 services:
   cloudflare_ddns:
-    image: favonia/cloudflare-ddns:latest # This is the official image, it supports ARM64
+    image: favonia/cloudflare-ddns:1.15.0
     container_name: cloudflare_ddns
     hostname: cloudflare_ddns
     restart: unless-stopped
     environment:
-      # --- Cloudflare Credentials ---
       - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
-
-      # --- Domains to Update ---
       - DOMAINS=${CF_DDNS_DOMAINS}
-
-      # --- Other Settings ---
       - PROXIED=${CF_DDNS_PROXIED}
       - UPDATE_CRON=@every 5m
       - IP6_PROVIDER=none
@@ -19,12 +14,12 @@ services:
 
   pihole:
     container_name: pihole
-    image: pihole/pihole:latest
+    image: pihole/pihole:2026.02.0
     hostname: pihole
     networks:
       macvlan:
         ipv4_address: ${IP_PIHOLE}
-      pihole_bridge: {}
+      backend_net: {}
     ports:
       - "53:53/tcp"
       - "53:53/udp"
@@ -32,7 +27,7 @@ services:
       TZ: "America/New_York"
       FTLCONF_webserver_api_password: ${PIHOLE_UI_PASSWORD}
       FTLCONF_dns_listeningMode: "all"
-      FTLCONF_dns_upstreams: "${IP_UNBOUND}" # Uses Unbound's parameterized IP
+      FTLCONF_dns_upstreams: "${IP_UNBOUND}"
       FTLCONF_dhcp_active: "true"
       FTLCONF_dhcp_start: "${PIHOLE_DHCP_START}"
       FTLCONF_dhcp_end: "${PIHOLE_DHCP_END}"
@@ -41,8 +36,8 @@ services:
       FTLCONF_dhcp_ipv6: "true"
       FTLCONF_dns_etc_dnsmasq_d: "true"
     volumes:
-      - "./pihole:/etc/pihole"
-      - "./pihole/dnsmasq.d/05-custom-wildcards.conf:/etc/dnsmasq.d/05-custom-wildcards.conf:ro"
+      - "./data/pihole:/etc/pihole"
+      - "./data/pihole/dnsmasq.d/05-custom-wildcards.conf:/etc/dnsmasq.d/05-custom-wildcards.conf:ro"
     cap_add:
       - NET_ADMIN
       - SYS_TIME
@@ -54,7 +49,7 @@ services:
 
   unbound:
     container_name: unbound
-    image: "mvance/unbound-rpi:latest"
+    image: "mvance/unbound-rpi:1.22"
     hostname: unbound
     command: >
       sh -c "
@@ -68,7 +63,7 @@ services:
       macvlan:
         ipv4_address: ${IP_UNBOUND}
     volumes:
-      - "./unbound:/opt/unbound/etc/unbound"
+      - "./data/unbound:/opt/unbound/etc/unbound"
     restart: unless-stopped
     healthcheck:
       test:
@@ -84,7 +79,7 @@ services:
   caddy:
     container_name: caddy
     hostname: caddy
-    image: ghcr.io/caddybuilds/caddy-cloudflare:latest
+    image: ghcr.io/caddybuilds/caddy-cloudflare:2.10.2
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -94,12 +89,13 @@ services:
     networks:
       macvlan:
         ipv4_address: ${IP_CADDY}
+      backend_net: {}
     volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
-      - ./caddy/error-pages:/opt/caddy-error-pages:ro
+      - ./data/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./data/caddy/error-pages:/opt/caddy-error-pages:ro
       - /srv:/srv
-      - caddy_data:/data
-      - caddy_config:/config
+      - ./data/caddy_data:/data
+      - ./data/caddy_config:/config
     environment:
       - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
       - ACME_DNS=cloudflare
@@ -122,15 +118,14 @@ services:
       start_period: 30s
 
   umami_db:
-    image: postgres:alpine
+    image: postgres:17-alpine
     container_name: umami_db
     hostname: umami_db
     restart: unless-stopped
     networks:
-      macvlan:
-        ipv4_address: ${IP_UMAMI_DB}
+      backend_net: {}
     volumes:
-      - umami_db_data:/var/lib/postgresql/data
+      - ./data/umami_db:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: ${UMAMI_DB_USER}
       POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD}
@@ -142,18 +137,19 @@ services:
       retries: 5
 
   umami_app:
-    image: docker.umami.is/umami-software/umami:postgresql-latest
+    image: ghcr.io/umami-software/umami:postgresql-3.0.3
     container_name: umami_app
     hostname: umami_app
     restart: unless-stopped
     networks:
       macvlan:
         ipv4_address: ${IP_UMAMI_APP}
+      backend_net: {}
     depends_on:
       umami_db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${UMAMI_DB_USER}:${UMAMI_DB_PASSWORD}@${IP_UMAMI_DB}:5432/${UMAMI_DB_NAME} # Uses Umami DB's parameterized IP
+      DATABASE_URL: postgresql://${UMAMI_DB_USER}:${UMAMI_DB_PASSWORD}@umami_db:5432/${UMAMI_DB_NAME}
       DATABASE_TYPE: postgresql
       APP_SECRET: ${UMAMI_APP_SECRET}
       IGNORE_IP: ${UMAMI_IGNORE_IP}
@@ -169,15 +165,14 @@ services:
       retries: 3
       start_period: 30s
 
-  # --- Monitoring Services ---
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.9.1
     container_name: prometheus
     hostname: prometheus
     restart: unless-stopped
     volumes:
-      - ./prometheus/config:/etc/prometheus
-      - prometheus_data:/prometheus
+      - ./data/prometheus/config:/etc/prometheus
+      - ./data/prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.retention.time=30d"
@@ -186,6 +181,7 @@ services:
     networks:
       macvlan:
         ipv4_address: ${IP_PROMETHEUS}
+      backend_net: {}
     healthcheck:
       test:
         [
@@ -198,14 +194,14 @@ services:
       start_period: 30s
 
   grafana:
-    image: grafana/grafana-oss:latest
+    image: grafana/grafana-oss:12.1.0
     container_name: grafana
     hostname: grafana
     restart: unless-stopped
     volumes:
-      - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./data/grafana_data:/var/lib/grafana
+      - ./data/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./data/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
@@ -213,6 +209,7 @@ services:
     networks:
       macvlan:
         ipv4_address: ${IP_GRAFANA}
+      backend_net: {}
     healthcheck:
       test:
         [
@@ -225,7 +222,7 @@ services:
       start_period: 30s
 
   rpi_node_exporter:
-    image: prom/node-exporter:latest
+    image: prom/node-exporter:v1.8.2
     container_name: rpi_node_exporter
     hostname: rpi_node_exporter
     restart: unless-stopped
@@ -252,11 +249,10 @@ services:
       start_period: 30s
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor:v0.56.2
     container_name: cadvisor
     hostname: cadvisor
     restart: unless-stopped
-    # privileged: true
     devices:
       - /dev/kmsg:/dev/kmsg
     volumes:
@@ -267,19 +263,21 @@ services:
     networks:
       macvlan:
         ipv4_address: ${IP_CADVISOR}
+      backend_net: {}
 
   blackbox_exporter:
-    image: prom/blackbox-exporter:latest
+    image: prom/blackbox-exporter:v0.28.0
     container_name: blackbox
     hostname: blackbox
     restart: unless-stopped
     volumes:
-      - ./blackbox/config:/config
+      - ./data/blackbox/config:/config
     command:
       - "--config.file=/config/blackbox.yml"
     networks:
       macvlan:
         ipv4_address: ${IP_BLACKBOX}
+      backend_net: {}
     healthcheck:
       test:
         [
@@ -292,29 +290,22 @@ services:
       start_period: 30s
 
   uptime_kuma:
-    image: louislam/uptime-kuma:latest
+    image: louislam/uptime-kuma:2.1.0
     container_name: uptime_kuma
     hostname: uptime_kuma
     restart: unless-stopped
     volumes:
-      - uptime_kuma_data:/app/data
+      - ./data/uptime_kuma:/app/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - TZ="America/New_York"
     networks:
       macvlan:
         ipv4_address: ${IP_UPTIME_KUMA}
-
-volumes:
-  caddy_data:
-  caddy_config:
-  prometheus_data:
-  grafana_data:
-  uptime_kuma_data:
-  umami_db_data:
+      backend_net: {}
 
 networks:
-  pihole_bridge:
+  backend_net:
     driver: bridge
   macvlan:
     name: pi0vlan

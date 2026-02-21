@@ -102,8 +102,8 @@ jobs:
           set +a
 
           # --- PiHole DNSMasq ---
-          DNSMASQ_TEMPLATE_PATH="$GITHUB_WORKSPACE/docker/pihole/dnsmasq.d/05-custom-wildcards.conf.template"
-          DNSMASQ_OUTPUT_PATH="$GITHUB_WORKSPACE/docker/pihole/dnsmasq.d/05-custom-wildcards.conf"
+          DNSMASQ_TEMPLATE_PATH="$GITHUB_WORKSPACE/docker/data/pihole/dnsmasq.d/05-custom-wildcards.conf.template"
+          DNSMASQ_OUTPUT_PATH="$GITHUB_WORKSPACE/docker/data/pihole/dnsmasq.d/05-custom-wildcards.conf"
           echo "Templating custom dnsmasq configuration..."
           # Ensure envsubst is available on the runner (it should be)
           envsubst < "${DNSMASQ_TEMPLATE_PATH}" > "${DNSMASQ_OUTPUT_PATH}"
@@ -111,8 +111,8 @@ jobs:
 
           # --- Prometheus ---
           # Define input and output paths using GITHUB_WORKSPACE directly
-          INPUT_TEMPLATE_PATH="$GITHUB_WORKSPACE/docker/prometheus/config/prometheus.yml.template"
-          OUTPUT_PROCESSED_PATH="$GITHUB_WORKSPACE/docker/prometheus/config/prometheus.yml"
+          INPUT_TEMPLATE_PATH="$GITHUB_WORKSPACE/docker/data/prometheus/config/prometheus.yml.template"
+          OUTPUT_PROCESSED_PATH="$GITHUB_WORKSPACE/docker/data/prometheus/config/prometheus.yml"
           echo "Templating Prometheus configuration..."
           echo "Input template: ${INPUT_TEMPLATE_PATH}"
           echo "Output file: ${OUTPUT_PROCESSED_PATH}"
@@ -120,8 +120,8 @@ jobs:
           # Check if the template file actually exists before trying to use it
           if [ ! -f "${INPUT_TEMPLATE_PATH}" ]; then
             echo "ERROR: Template file NOT FOUND at ${INPUT_TEMPLATE_PATH}"
-            echo "Listing contents of $GITHUB_WORKSPACE/docker/prometheus/config/ for debugging:"
-            ls -la "$GITHUB_WORKSPACE/docker/prometheus/config/" || echo "Could not list directory."
+            echo "Listing contents of $GITHUB_WORKSPACE/docker/data/prometheus/config/ for debugging:"
+            ls -la "$GITHUB_WORKSPACE/docker/data/prometheus/config/" || echo "Could not list directory."
             exit 1
           fi
 
@@ -137,8 +137,8 @@ jobs:
           fi
 
           # --- Unbound ---
-          UNBOUND_TEMPLATE_PATH="$GITHUB_WORKSPACE/docker/unbound/unbound.conf.template"
-          UNBOUND_OUTPUT_PATH="$GITHUB_WORKSPACE/docker/unbound/unbound.conf" # Final config name
+          UNBOUND_TEMPLATE_PATH="$GITHUB_WORKSPACE/docker/data/unbound/unbound.conf.template"
+          UNBOUND_OUTPUT_PATH="$GITHUB_WORKSPACE/docker/data/unbound/unbound.conf" # Final config name
           echo "Templating Unbound configuration..."
           echo "Input template: ${UNBOUND_TEMPLATE_PATH}"
           echo "Output file: ${UNBOUND_OUTPUT_PATH}"
@@ -165,8 +165,8 @@ jobs:
             --exclude ".git/" \
             --exclude ".github/" \
             --exclude "*.sops.env" \
-            --exclude "prometheus/config/prometheus.yml.template" \
-            --exclude "unbound/unbound.conf.template"
+            --exclude "data/prometheus/config/prometheus.yml.template" \
+            --exclude "data/unbound/unbound.conf.template"
 
       - name: Navigate to Docker Compose directory
         run: cd "${{ secrets.DOCKER_DIR }}"

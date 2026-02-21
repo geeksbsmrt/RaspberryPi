@@ -10,7 +10,6 @@ This repository contains configuration files and resources for setting up and ma
 - Pre-commit Hooks: Automated code quality checks to maintain code standards.
 - Encrypted Secrets Management: Secure handling of sensitive information using SOPS.
 - CI/CD Workflows: Automated workflows for testing and deployment.
-- **Repository Rules**: Standardized guidelines for networking, security, and operations in [.antigravity/rules.md](file:///Users/adam/Code/RaspberryPi/.antigravity/rules.md).
 
 ## Repository Structure
 
