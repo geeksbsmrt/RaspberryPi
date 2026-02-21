@@ -43,6 +43,12 @@
 (home) {
     import all
     tls internal
+
+    # Restrict to LAN + Tailscale only (defense-in-depth)
+    @denied {
+        not remote_ip private_ranges 100.64.0.0/10
+    }
+    abort @denied
 }
 
 firefly.home {
