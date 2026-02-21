@@ -1,7 +1,9 @@
-# ./docker/data/prometheus/config/prometheus.yml.template
 global:
   scrape_interval: 30s
   evaluation_interval: 30s
+
+rule_files:
+  - "alert_rules.yml"
 
 scrape_configs:
   - job_name: 'prometheus_self'
@@ -21,6 +23,12 @@ scrape_configs:
       - targets: ['caddy:2019']
     metrics_path: /metrics
 
+  - job_name: 'uptime_kuma'
+    metrics_path: /metrics
+    bearer_token: '${UPTIME_KUMA_API_KEY}'
+    static_configs:
+      - targets: ['uptime_kuma:3001']
+
   - job_name: 'website_and_http_checks'
     metrics_path: /probe
     params:
@@ -30,6 +38,11 @@ scrape_configs:
         - https://geeksbsmrt.com
         - https://smrtgeekdevs.com
         - https://pihole.smrtgeekdevs.com
+        - https://analytics.geeksbsmrt.com
+        - https://firefly.home
+        - https://grafana.home
+        - https://uptime.home
+        - https://firefly-import.home
         - http://pihole/admin/
     relabel_configs:
       - source_labels: [__address__]
