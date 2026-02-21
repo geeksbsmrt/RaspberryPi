@@ -96,6 +96,18 @@ analytics.geeksbsmrt.com {
     reverse_proxy http://{$IP_UMAMI_APP}:3000
 }
 
+firefly.geeksbsmrt.com {
+    import geeksbsmrt
+    import logging firefly.geeksbsmrt.com
+    reverse_proxy http://{$IP_FIREFLY_APP}:8080
+}
+
+import.firefly.geeksbsmrt.com {
+    import geeksbsmrt
+    import logging import.firefly.geeksbsmrt.com
+    reverse_proxy http://{$IP_FIREFLY_IMPORTER}:8080
+}
+
 *.geeksbsmrt.com {
     import geeksbsmrt
     import logging wildcard.geeksbsmrt.com

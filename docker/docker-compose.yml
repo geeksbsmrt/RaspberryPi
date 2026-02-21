@@ -102,6 +102,8 @@ services:
       - IP_GRAFANA=${IP_GRAFANA}
       - IP_UPTIME_KUMA=${IP_UPTIME_KUMA}
       - IP_UMAMI_APP=${IP_UMAMI_APP}
+      - IP_FIREFLY_APP=${IP_FIREFLY_APP}
+      - IP_FIREFLY_IMPORTER=${IP_FIREFLY_IMPORTER}
     healthcheck:
       test:
         [
@@ -304,6 +306,96 @@ services:
         ipv4_address: ${IP_UPTIME_KUMA}
       backend_net: {}
 
+  firefly_db:
+    image: postgres:18-alpine
+    container_name: firefly_db
+    hostname: firefly_db
+    restart: unless-stopped
+    networks:
+      backend_net: {}
+    volumes:
+      - firefly_db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${FIREFLY_DB_USER}
+      POSTGRES_PASSWORD: ${FIREFLY_DB_PASSWORD}
+      POSTGRES_DB: ${FIREFLY_DB_NAME}
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U ${FIREFLY_DB_USER} -d ${FIREFLY_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  firefly_app:
+    image: fireflyiii/core:version-6.4.23
+    container_name: firefly_app
+    hostname: firefly_app
+    restart: unless-stopped
+    networks:
+      macvlan:
+        ipv4_address: ${IP_FIREFLY_APP}
+      backend_net: {}
+    depends_on:
+      firefly_db:
+        condition: service_healthy
+    volumes:
+      - firefly_upload:/var/www/html/storage/upload
+    environment:
+      - APP_KEY=${FIREFLY_APP_KEY}
+      - DB_CONNECTION=pgsql
+      - DB_HOST=firefly_db
+      - DB_PORT=5432
+      - DB_DATABASE=${FIREFLY_DB_NAME}
+      - DB_USERNAME=${FIREFLY_DB_USER}
+      - DB_PASSWORD=${FIREFLY_DB_PASSWORD}
+      - TZ="America/New_York"
+      - APP_URL=https://firefly.geeksbsmrt.com
+      - TRUSTED_PROXIES=**
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/about"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  firefly_importer:
+    image: fireflyiii/data-importer:version-2.1.1
+    container_name: firefly_importer
+    hostname: firefly_importer
+    restart: unless-stopped
+    networks:
+      macvlan:
+        ipv4_address: ${IP_FIREFLY_IMPORTER}
+      backend_net: {}
+    depends_on:
+      firefly_app:
+        condition: service_healthy
+    environment:
+      - FIREFLY_III_URL=http://firefly_app:8080
+      - VANITY_URL=https://firefly.geeksbsmrt.com
+      - APP_URL=https://import.firefly.geeksbsmrt.com
+      - FIREFLY_III_ACCESS_TOKEN=${FIREFLY_IMPORTER_TOKEN}
+      - TRUSTED_PROXIES=**
+      - TZ="America/New_York"
+
+  # Firefly III and the Data Importer both require scheduled tasks.
+  # Firefly III (core) needs a daily cron for recurring transactions and cleanups.
+  # The Data Importer needs a frequent cron (e.g. every 15 mins) for auto-imports.
+  # We use a single, lightweight Alpine container to handle both schedules to save resources.
+  firefly_cron:
+    image: alpine:3.21
+    container_name: firefly_cron
+    restart: unless-stopped
+    command: >
+      sh -c "echo -e \"0 3 * * * wget -qO- http://firefly_app:8080/api/v1/cron/$${FIREFLY_CRON_TOKEN}\n*/15 * * * * wget -qO- http://firefly_importer:8080/autocron\" | crontab - && crond -f -L /dev/stdout"
+    networks:
+      backend_net: {}
+    depends_on:
+      firefly_app:
+        condition: service_started
+      firefly_importer:
+        condition: service_started
+
 volumes:
   caddy_data:
   caddy_config:
@@ -311,6 +403,8 @@ volumes:
   grafana_data:
   uptime_kuma_data:
   umami_db_data:
+  firefly_db_data:
+  firefly_upload:
 
 networks:
   backend_net:
