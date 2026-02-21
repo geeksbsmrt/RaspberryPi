@@ -357,7 +357,7 @@
       "type": "timeseries"
     }
   ],
-  "refresh": "1m",
+  "refresh": "30s",
   "timepicker": {
     "refresh_intervals": [
       "5s",
