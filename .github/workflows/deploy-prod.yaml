@@ -157,16 +157,30 @@ jobs:
           fi
 
       - name: Sync configuration files
+        id: sync
         run: |
           echo "Syncing repository contents to ${{ secrets.DOCKER_DIR }}"
-          sudo rsync -av --no-o --no-g --checksum \
+          # Use --itemize-changes (-i) and capture output to a file to determine if actual transfers occurred
+          sudo rsync -avi --no-o --no-g --checksum \
             "$GITHUB_WORKSPACE/docker/" \
             "${{ secrets.DOCKER_DIR }}/" \
             --exclude ".git/" \
             --exclude ".github/" \
             --exclude "*.sops.env" \
             --exclude "prometheus/config/prometheus.yml.template" \
-            --exclude "unbound/unbound.conf.template"
+            --exclude "unbound/unbound.conf.template" > rsync_output.txt
+
+          cat rsync_output.txt
+
+          # Check if rsync_output.txt contains lines starting with '<', '>', or 'c' which indicate file updates/transfers
+          # Lines starting with '.' mean no change. Lines starting with '*' are usually messages/directories
+          if grep -E "^[<c>]|^>f" rsync_output.txt > /dev/null; then
+            echo "Files were updated during sync."
+            echo "files_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No files were updated during sync."
+            echo "files_changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Navigate to Docker Compose directory
         run: cd "${{ secrets.DOCKER_DIR }}"
@@ -179,8 +193,10 @@ jobs:
           password: ${{ secrets.DOCKER_PAT }}
 
       - name: Apply Docker Compose changes
+        if: steps.sync.outputs.files_changed == 'true' || github.event_name == 'workflow_dispatch'
         run: |
           cd "${{ secrets.DOCKER_DIR }}"
+          echo "Changes detected or manual run forced. Applying Docker Compose..."
           sudo docker compose up -d --remove-orphans
 
       - name: Prune unused Docker images
