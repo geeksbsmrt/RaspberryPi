@@ -1,0 +1,29 @@
+name: Dependabot Auto-Merge
+
+on: pull_request
+
+permissions:
+    contents: write
+    pull-requests: write
+
+jobs:
+    dependabot:
+        runs-on: self-hosted
+        if: github.repository == 'geeksbsmrt/RaspberryPi' && github.actor == 'dependabot[bot]'
+        steps:
+            - name: Auto-merge Dependabot PRs
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      github.rest.pulls.createReview({
+                            owner: context.repo.owner,
+                            repo: context.repo.repo,
+                            pull_number: context.issue.number,
+                            event: 'APPROVE'
+                        });
+                        github.rest.pulls.merge({
+                            owner: context.repo.owner,
+                            repo: context.repo.repo,
+                            pull_number: context.issue.number,
+                            merge_method: 'squash'
+                        });
