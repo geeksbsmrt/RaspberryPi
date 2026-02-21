@@ -1,2 +1,3 @@
+address=/home/${IP_CADDY}
 address=/geeksbsmrt.com/${IP_CADDY}
 address=/smrtgeekdevs.com/${IP_CADDY}
