@@ -36,8 +36,8 @@ services:
       FTLCONF_dhcp_ipv6: "true"
       FTLCONF_dns_etc_dnsmasq_d: "true"
     volumes:
-      - "./data/pihole:/etc/pihole"
-      - "./data/pihole/dnsmasq.d/05-custom-wildcards.conf:/etc/dnsmasq.d/05-custom-wildcards.conf:ro"
+      - "./pihole:/etc/pihole"
+      - "./pihole/dnsmasq.d/05-custom-wildcards.conf:/etc/dnsmasq.d/05-custom-wildcards.conf:ro"
     cap_add:
       - NET_ADMIN
       - SYS_TIME
@@ -63,7 +63,7 @@ services:
       macvlan:
         ipv4_address: ${IP_UNBOUND}
     volumes:
-      - "./data/unbound:/opt/unbound/etc/unbound"
+      - "./unbound:/opt/unbound/etc/unbound"
     restart: unless-stopped
     healthcheck:
       test:
@@ -91,11 +91,11 @@ services:
         ipv4_address: ${IP_CADDY}
       backend_net: {}
     volumes:
-      - ./data/caddy/Caddyfile:/etc/caddy/Caddyfile
-      - ./data/caddy/error-pages:/opt/caddy-error-pages:ro
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy/error-pages:/opt/caddy-error-pages:ro
       - /srv:/srv
-      - ./data/caddy_data:/data
-      - ./data/caddy_config:/config
+      - caddy_data:/data
+      - caddy_config:/config
     environment:
       - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
       - ACME_DNS=cloudflare
@@ -125,7 +125,7 @@ services:
     networks:
       backend_net: {}
     volumes:
-      - ./data/umami_db:/var/lib/postgresql/data
+      - umami_db_data:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: ${UMAMI_DB_USER}
       POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD}
@@ -171,8 +171,8 @@ services:
     hostname: prometheus
     restart: unless-stopped
     volumes:
-      - ./data/prometheus/config:/etc/prometheus
-      - ./data/prometheus_data:/prometheus
+      - ./prometheus/config:/etc/prometheus
+      - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.retention.time=30d"
@@ -199,9 +199,9 @@ services:
     hostname: grafana
     restart: unless-stopped
     volumes:
-      - ./data/grafana_data:/var/lib/grafana
-      - ./data/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - ./data/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
@@ -271,7 +271,7 @@ services:
     hostname: blackbox
     restart: unless-stopped
     volumes:
-      - ./data/blackbox/config:/config
+      - ./blackbox/config:/config
     command:
       - "--config.file=/config/blackbox.yml"
     networks:
@@ -295,7 +295,7 @@ services:
     hostname: uptime_kuma
     restart: unless-stopped
     volumes:
-      - ./data/uptime_kuma:/app/data
+      - uptime_kuma_data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - TZ="America/New_York"
@@ -303,6 +303,14 @@ services:
       macvlan:
         ipv4_address: ${IP_UPTIME_KUMA}
       backend_net: {}
+
+volumes:
+  caddy_data:
+  caddy_config:
+  prometheus_data:
+  grafana_data:
+  uptime_kuma_data:
+  umami_db_data:
 
 networks:
   backend_net:
