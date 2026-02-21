@@ -1,0 +1,60 @@
+groups:
+  - name: HostAlerts
+    rules:
+      - alert: HighCpuUsage
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is at {{ $value }}%"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is at {{ $value }}%"
+
+      - alert: DiskSpaceLow
+        expr: node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"} * 100 < 15
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk space available is less than 15% ({{ $value }}% left)"
+
+  - name: ContainerAlerts
+    rules:
+      - alert: ContainerDown
+        expr: container_last_seen{container_label_com_docker_compose_service!=""} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container {{ $labels.container_label_com_docker_compose_service }} is down"
+          description: "Container has not been seen for more than 2 minutes"
+
+  - name: ProbeAlerts
+    rules:
+      - alert: EndpointDown
+        expr: probe_success == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Endpoint {{ $labels.instance }} is down"
+          description: "Blackbox probe failed for {{ $labels.instance }}"
+
+      - alert: SSLCertExpiring
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 14
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSL certificate for {{ $labels.instance }} expires soon"
+          description: "Certificate expires in less than 14 days"

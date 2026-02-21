@@ -1,6 +1,6 @@
-[![Deploy Docker Stack to Prod](https://github.com/geeksbsmrt/RaspberryPi/actions/workflows/deploy-prod.yaml/badge.svg)](https://github.com/geeksbsmrt/RaspberryPi/actions/workflows/deploy-prod.yaml)
+# geeksbsmrt/RaspberryPi Home Lab Configuration
 
-# RaspberryPi Home Lab Configuration
+[![Deploy Docker Stack to Prod](https://github.com/geeksbsmrt/RaspberryPi/actions/workflows/deploy-prod.yaml/badge.svg)](https://github.com/geeksbsmrt/RaspberryPi/actions/workflows/deploy-prod.yaml)
 
 This repository contains configuration files and resources for setting up and managing a Raspberry Pi-based home lab environment. It leverages tools like Docker, pre-commit hooks, and encrypted secrets management to ensure a secure and maintainable setup.
 
@@ -21,3 +21,9 @@ This repository contains configuration files and resources for setting up and ma
 docker/                  # Docker configurations and Dockerfiles
 secrets.sops.env         # Encrypted environment variables
 ```
+
+## Monitoring
+
+- **Uptime Kuma**: External and internal status page (`uptime.home`).
+- **Prometheus & Grafana**: Time-series metrics & visualization (`grafana.home`).
+- **Resource Scope**: Node Exporter (Host), cAdvisor (Containers), Blackbox (Endpoints), Caddy (Web Traffic).

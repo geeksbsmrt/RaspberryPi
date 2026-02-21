@@ -62,4 +62,11 @@ To ensure the home lab remains secure and stable, the following standards apply:
   - In a "Service Down" situation, manual fixes may be applied to the live instance **ONLY after explicit USER permission**.
   - Once verified, changes **MUST** be immediately committed to Git.
 - **Idempotency**: All setup scripts must be safe to run multiple times.
-- **Documentation**: Maintain `ReadMe.md` parity with cluster changes.
+
+## 6. Monitoring & Observability
+
+Every new service added MUST be onboarded to the monitoring stack using native tools to avoid sidecar vulnerabilities:
+
+1. **Uptime Kuma**: Add the public/internal URL for immediate up/down status tracking.
+2. **Prometheus / Blackbox**: Add HTTP and/or DNS probes to the `website_and_http_checks` or `dns_service_checks` in `prometheus.yml.template`.
+3. **Alerts**: Any new probes must be covered by the generic "EndpointDown" rule in `alert_rules.yml`. Do not add custom third-party exporters unless explicitly required.
