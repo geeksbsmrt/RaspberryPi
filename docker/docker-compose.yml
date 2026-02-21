@@ -137,7 +137,7 @@ services:
       retries: 5
 
   umami_app:
-    image: ghcr.io/umami-software/umami:postgresql-v3.0.3
+    image: ghcr.io/umami-software/umami:3.0.3
     container_name: umami_app
     hostname: umami_app
     restart: unless-stopped
