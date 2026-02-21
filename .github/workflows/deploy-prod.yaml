@@ -193,10 +193,10 @@ jobs:
           password: ${{ secrets.DOCKER_PAT }}
 
       - name: Apply Docker Compose changes
-        if: steps.sync.outputs.files_changed == 'true' || github.event_name == 'workflow_dispatch'
+        if: steps.sync.outputs.files_changed == 'true'
         run: |
           cd "${{ secrets.DOCKER_DIR }}"
-          echo "Changes detected or manual run forced. Applying Docker Compose..."
+          echo "Changes detected. Applying Docker Compose..."
           sudo docker compose up -d --remove-orphans
 
       - name: Prune unused Docker images
