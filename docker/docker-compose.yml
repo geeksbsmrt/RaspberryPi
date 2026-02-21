@@ -49,7 +49,7 @@ services:
 
   unbound:
     container_name: unbound
-    image: "mvance/unbound-rpi:1.22"
+    image: "mvance/unbound-rpi:1.22.0"
     hostname: unbound
     command: >
       sh -c "
