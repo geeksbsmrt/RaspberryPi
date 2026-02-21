@@ -197,7 +197,7 @@ jobs:
         run: |
           cd "${{ secrets.DOCKER_DIR }}"
           echo "Changes detected. Applying Docker Compose..."
-          sudo docker compose up -d --remove-orphans
+          sudo docker compose up -d --pull missing --no-build --remove-orphans
 
       - name: Prune unused Docker images
         if: success()
