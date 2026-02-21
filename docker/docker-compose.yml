@@ -1,6 +1,6 @@
 services:
   cloudflare_ddns:
-    image: favonia/cloudflare-ddns:1.15.0
+    image: favonia/cloudflare-ddns:1.15.1
     container_name: cloudflare_ddns
     hostname: cloudflare_ddns
     restart: unless-stopped
@@ -14,7 +14,7 @@ services:
 
   pihole:
     container_name: pihole
-    image: pihole/pihole:2025.02.0
+    image: pihole/pihole:2026.02.0
     hostname: pihole
     networks:
       macvlan:
@@ -79,7 +79,7 @@ services:
   caddy:
     container_name: caddy
     hostname: caddy
-    image: ghcr.io/caddybuilds/caddy-cloudflare:2.10.2
+    image: ghcr.io/caddybuilds/caddy-cloudflare:2.11
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -118,7 +118,7 @@ services:
       start_period: 30s
 
   umami_db:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     container_name: umami_db
     hostname: umami_db
     restart: unless-stopped
@@ -166,7 +166,7 @@ services:
       start_period: 30s
 
   prometheus:
-    image: prom/prometheus:v3.1.0
+    image: prom/prometheus:v3.9.1
     container_name: prometheus
     hostname: prometheus
     restart: unless-stopped
@@ -194,7 +194,7 @@ services:
       start_period: 30s
 
   grafana:
-    image: grafana/grafana-oss:12.1.0
+    image: grafana/grafana-oss:12.3.3
     container_name: grafana
     hostname: grafana
     restart: unless-stopped
@@ -222,7 +222,7 @@ services:
       start_period: 30s
 
   rpi_node_exporter:
-    image: prom/node-exporter:v1.8.2
+    image: prom/node-exporter:v1.10.2
     container_name: rpi_node_exporter
     hostname: rpi_node_exporter
     restart: unless-stopped
@@ -249,7 +249,7 @@ services:
       start_period: 30s
 
   cadvisor:
-    image: ghcr.io/google/cadvisor/cadvisor:v0.51.0
+    image: ghcr.io/google/cadvisor/cadvisor:0.56.2
     container_name: cadvisor
     hostname: cadvisor
     restart: unless-stopped
@@ -290,7 +290,7 @@ services:
       start_period: 30s
 
   uptime_kuma:
-    image: louislam/uptime-kuma:2.1.0
+    image: louislam/uptime-kuma:2.1.3
     container_name: uptime_kuma
     hostname: uptime_kuma
     restart: unless-stopped
