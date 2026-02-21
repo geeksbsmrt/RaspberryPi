@@ -45,6 +45,18 @@
     tls internal
 }
 
+firefly.home {
+    import home
+    import logging firefly.home
+    reverse_proxy http://{$IP_FIREFLY_APP}:8080
+}
+
+firefly-import.home {
+    import home
+    import logging firefly-import.home
+    reverse_proxy http://{$IP_FIREFLY_IMPORTER}:8080
+}
+
 grafana.home {
     import home
     import logging grafana.home
@@ -94,18 +106,6 @@ analytics.geeksbsmrt.com {
     import geeksbsmrt
     import logging analytics.geeksbsmrt.com
     reverse_proxy http://{$IP_UMAMI_APP}:3000
-}
-
-firefly.home {
-    import home
-    import logging firefly.home
-    reverse_proxy http://{$IP_FIREFLY_APP}:8080
-}
-
-firefly-import.home {
-    import home
-    import logging firefly-import.home
-    reverse_proxy http://{$IP_FIREFLY_IMPORTER}:8080
 }
 
 *.geeksbsmrt.com {
