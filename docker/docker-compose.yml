@@ -384,7 +384,7 @@ services:
   # The Data Importer needs a frequent cron (e.g. every 15 mins) for auto-imports.
   # We use a single, lightweight Alpine container to handle both schedules to save resources.
   firefly_cron:
-    image: alpine:3.21
+    image: alpine:3.23
     container_name: firefly_cron
     restart: unless-stopped
     command: >
