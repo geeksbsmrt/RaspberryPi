@@ -1,6 +1,6 @@
 version: 2
 updates:
-  - package-ecosystem: "docker"
+  - package-ecosystem: "docker-compose"
     directory: "/docker"
     schedule:
       interval: "weekly"
@@ -10,3 +10,11 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "github-actions"
