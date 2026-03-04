@@ -79,7 +79,7 @@ services:
   caddy:
     container_name: caddy
     hostname: caddy
-    image: ghcr.io/caddybuilds/caddy-cloudflare:2.10.2
+    image: ghcr.io/caddybuilds/caddy-cloudflare:2.11.1
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -168,7 +168,7 @@ services:
       start_period: 30s
 
   prometheus:
-    image: prom/prometheus:v3.9.1
+    image: prom/prometheus:v3.10.0
     container_name: prometheus
     hostname: prometheus
     restart: unless-stopped
@@ -196,7 +196,7 @@ services:
       start_period: 30s
 
   grafana:
-    image: grafana/grafana-oss:12.3.3
+    image: grafana/grafana-oss:12.4.0
     container_name: grafana
     hostname: grafana
     restart: unless-stopped
@@ -328,7 +328,7 @@ services:
       retries: 5
 
   firefly_app:
-    image: fireflyiii/core:version-6.4.23
+    image: fireflyiii/core:version-6.5.3
     container_name: firefly_app
     hostname: firefly_app
     restart: unless-stopped
@@ -384,7 +384,7 @@ services:
   # The Data Importer needs a frequent cron (e.g. every 15 mins) for auto-imports.
   # We use a single, lightweight Alpine container to handle both schedules to save resources.
   firefly_cron:
-    image: alpine:3.21
+    image: alpine:3.23
     container_name: firefly_cron
     restart: unless-stopped
     command: >
