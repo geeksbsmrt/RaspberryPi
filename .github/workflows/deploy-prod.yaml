@@ -26,6 +26,36 @@ jobs:
           echo "Checking age version..."
           age --version
 
+      - name: Install or Update GitHub CLI (gh)
+        run: |
+          echo "Checking for latest gh release..."
+          ARCH=$(uname -m)
+          if [ "$ARCH" = "aarch64" ]; then GH_ARCH="arm64"; elif [[ "$ARCH" == armv* ]]; then GH_ARCH="armv6"; else GH_ARCH="amd64"; fi
+          GH_VERSION=$(curl -sH "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/cli/cli/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
+
+          INSTALL_GH=false
+          if ! command -v gh &> /dev/null; then
+              echo "gh not found. Will install version $GH_VERSION"
+              INSTALL_GH=true
+          else
+              CURRENT_VERSION=$(gh --version | head -n 1 | awk '{print $3}')
+              if [ "$CURRENT_VERSION" != "$GH_VERSION" ]; then
+                  echo "gh version mismatch (current: $CURRENT_VERSION, latest: $GH_VERSION). Updating..."
+                  INSTALL_GH=true
+              else
+                  echo "gh is up-to-date (version $CURRENT_VERSION)."
+              fi
+          fi
+
+          if [ "$INSTALL_GH" = true ]; then
+              echo "Downloading gh version $GH_VERSION for $GH_ARCH..."
+              curl -sL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${GH_ARCH}.tar.gz" -o gh.tar.gz
+              tar xzf gh.tar.gz
+              # Install globally so it's persistent and usable by all workflows
+              sudo cp "gh_${GH_VERSION}_linux_${GH_ARCH}/bin/gh" "/usr/local/bin/"
+              echo "Installation complete."
+          fi
+
       - name: Decrypt secrets.sops.env to .env file on Pi
         env:
           SOPS_AGE_KEY: ${{ secrets.RUNNER_AGE_PRIVATE_KEY }}
@@ -37,12 +67,12 @@ jobs:
           sudo -E chmod 600 "${TARGET_ENV_FILE}"
           echo ".env file created at ${TARGET_ENV_FILE} with restricted permissions."
 
-      - name: Check for Tailscale and Install if Missing
+      - name: Install or Update Tailscale
         run: |
-          # This step is already quiet, no changes needed.
           if command -v tailscale &> /dev/null
           then
-              echo "Tailscale is already installed. Skipping installation."
+              echo "Tailscale is already installed. Attempting update..."
+              sudo tailscale update --yes || echo "Tailscale update failed or unsupported via this method, continuing..."
           else
               echo "Tailscale not found. Installing..."
               curl -fsSL https://tailscale.com/install.sh | sudo sh
