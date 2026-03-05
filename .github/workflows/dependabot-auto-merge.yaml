@@ -11,19 +11,20 @@ jobs:
         runs-on: self-hosted
         if: github.repository == 'geeksbsmrt/RaspberryPi' && github.actor == 'dependabot[bot]'
         steps:
-            - name: Auto-merge Dependabot PRs
-              uses: actions/github-script@v8
+            - name: Dependabot metadata
+              id: metadata
+              uses: dependabot/fetch-metadata@v2
               with:
-                  script: |
-                      github.rest.pulls.createReview({
-                            owner: context.repo.owner,
-                            repo: context.repo.repo,
-                            pull_number: context.issue.number,
-                            event: 'APPROVE'
-                        });
-                        github.rest.pulls.merge({
-                            owner: context.repo.owner,
-                            repo: context.repo.repo,
-                            pull_number: context.issue.number,
-                            merge_method: 'squash'
-                        });
+                  github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+            - name: Approve PR
+              run: gh pr review --approve "$PR_URL"
+              env:
+                  PR_URL: ${{github.event.pull_request.html_url}}
+                  GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+            - name: Enable auto-merge
+              run: gh pr merge --auto --squash "$PR_URL"
+              env:
+                  PR_URL: ${{github.event.pull_request.html_url}}
+                  GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
