@@ -360,7 +360,7 @@ services:
       start_period: 30s
 
   firefly_importer:
-    image: fireflyiii/data-importer:version-2.1.1
+    image: fireflyiii/data-importer:version-2.2.0
     container_name: firefly_importer
     hostname: firefly_importer
     restart: unless-stopped
