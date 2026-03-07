@@ -79,7 +79,7 @@ services:
   caddy:
     container_name: caddy
     hostname: caddy
-    image: ghcr.io/caddybuilds/caddy-cloudflare:2.11.1
+    image: ghcr.io/caddybuilds/caddy-cloudflare:2.11.2
     restart: unless-stopped
     logging:
       driver: "json-file"
