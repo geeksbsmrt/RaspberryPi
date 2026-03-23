@@ -1,0 +1,170 @@
+{
+  "Dhcp4": {
+    "interfaces-config": {
+      "interfaces": [
+        "eth0",
+        "eth0.20",
+        "eth0.30",
+        "eth0.40",
+        "eth0.50",
+        "eth0.60",
+        "eth0.70",
+        "eth0.80"
+      ],
+      "dhcp-socket-type": "raw"
+    },
+    "lease-database": {
+      "type": "memfile",
+      "persist": true,
+      "name": "/var/lib/kea/dhcp4.leases",
+      "lfc-interval": 3600
+    },
+    "valid-lifetime": 86400,
+    "renew-timer": 43200,
+    "rebind-timer": 75600,
+    "option-data": [
+      {
+        "name": "domain-name-servers",
+        "data": "${IP_PIHOLE}"
+      }
+    ],
+    "subnet4": [
+      {
+        "id": 10,
+        "comment": "Management — Admin only, no internet",
+        "subnet": "${VLAN_MGMT_SUBNET}",
+        "interface": "eth0",
+        "pools": [
+          {
+            "pool": "${VLAN_MGMT_DHCP_RANGE}"
+          }
+        ],
+        "option-data": [
+          {
+            "name": "routers",
+            "data": "${VLAN_MGMT_GATEWAY}"
+          }
+        ]
+      },
+      {
+        "id": 20,
+        "comment": "Infrastructure — DHCP, DNS, monitoring, web",
+        "subnet": "${VLAN_INFRA_SUBNET}",
+        "interface": "eth0.20",
+        "pools": [
+          {
+            "pool": "${VLAN_INFRA_DHCP_RANGE}"
+          }
+        ],
+        "option-data": [
+          {
+            "name": "routers",
+            "data": "${VLAN_INFRA_GATEWAY}"
+          }
+        ]
+      },
+      {
+        "id": 30,
+        "comment": "Personal — Full LAN access",
+        "subnet": "${VLAN_PERSONAL_SUBNET}",
+        "interface": "eth0.30",
+        "pools": [
+          {
+            "pool": "${VLAN_PERSONAL_DHCP_RANGE}"
+          }
+        ],
+        "option-data": [
+          {
+            "name": "routers",
+            "data": "${VLAN_PERSONAL_GATEWAY}"
+          }
+        ]
+      },
+      {
+        "id": 40,
+        "comment": "Work — Internet, isolated from Personal",
+        "subnet": "${VLAN_WORK_SUBNET}",
+        "interface": "eth0.40",
+        "pools": [
+          {
+            "pool": "${VLAN_WORK_DHCP_RANGE}"
+          }
+        ],
+        "option-data": [
+          {
+            "name": "routers",
+            "data": "${VLAN_WORK_GATEWAY}"
+          }
+        ]
+      },
+      {
+        "id": 50,
+        "comment": "IoT — Internet, no cross-VLAN",
+        "subnet": "${VLAN_IOT_SUBNET}",
+        "interface": "eth0.50",
+        "pools": [
+          {
+            "pool": "${VLAN_IOT_DHCP_RANGE}"
+          }
+        ],
+        "option-data": [
+          {
+            "name": "routers",
+            "data": "${VLAN_IOT_GATEWAY}"
+          }
+        ]
+      },
+      {
+        "id": 60,
+        "comment": "Cameras — No internet, NVR to Infra only",
+        "subnet": "${VLAN_CAM_SUBNET}",
+        "interface": "eth0.60",
+        "pools": [
+          {
+            "pool": "${VLAN_CAM_DHCP_RANGE}"
+          }
+        ],
+        "option-data": [
+          {
+            "name": "routers",
+            "data": "${VLAN_CAM_GATEWAY}"
+          }
+        ]
+      },
+      {
+        "id": 70,
+        "comment": "Guest — Internet only, fully isolated",
+        "subnet": "${VLAN_GUEST_SUBNET}",
+        "interface": "eth0.70",
+        "pools": [
+          {
+            "pool": "${VLAN_GUEST_DHCP_RANGE}"
+          }
+        ],
+        "option-data": [
+          {
+            "name": "routers",
+            "data": "${VLAN_GUEST_GATEWAY}"
+          }
+        ]
+      },
+      {
+        "id": 80,
+        "comment": "Homelab — Internet, isolated from Personal",
+        "subnet": "${VLAN_HOMELAB_SUBNET}",
+        "interface": "eth0.80",
+        "pools": [
+          {
+            "pool": "${VLAN_HOMELAB_DHCP_RANGE}"
+          }
+        ],
+        "option-data": [
+          {
+            "name": "routers",
+            "data": "${VLAN_HOMELAB_GATEWAY}"
+          }
+        ]
+      }
+    ]
+  }
+}
