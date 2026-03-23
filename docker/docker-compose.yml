@@ -20,6 +20,20 @@ services:
       macvlan:
         ipv4_address: ${IP_PIHOLE}
       backend_net: {}
+      mgmt_vlan:
+        ipv4_address: ${IP_PIHOLE_MGMT}
+      personal_vlan:
+        ipv4_address: ${IP_PIHOLE_PERSONAL}
+      work_vlan:
+        ipv4_address: ${IP_PIHOLE_WORK}
+      iot_vlan:
+        ipv4_address: ${IP_PIHOLE_IOT}
+      cam_vlan:
+        ipv4_address: ${IP_PIHOLE_CAM}
+      guest_vlan:
+        ipv4_address: ${IP_PIHOLE_GUEST}
+      homelab_vlan:
+        ipv4_address: ${IP_PIHOLE_HOMELAB}
     ports:
       - "53:53/tcp"
       - "53:53/udp"
@@ -28,12 +42,13 @@ services:
       FTLCONF_webserver_api_password: ${PIHOLE_UI_PASSWORD}
       FTLCONF_dns_listeningMode: "all"
       FTLCONF_dns_upstreams: "${IP_UNBOUND}"
-      FTLCONF_dhcp_active: "true"
-      FTLCONF_dhcp_start: "${PIHOLE_DHCP_START}"
-      FTLCONF_dhcp_end: "${PIHOLE_DHCP_END}"
-      FTLCONF_dhcp_router: "${PIHOLE_DHCP_ROUTER}"
-      FTLCONF_dhcp_leaseTime: "24h"
-      FTLCONF_dhcp_ipv6: "true"
+      FTLCONF_dhcp_active: "false"
+      # DHCP disabled — handled by Kea. Retained for rollback.
+      # FTLCONF_dhcp_start: "${PIHOLE_DHCP_START}"
+      # FTLCONF_dhcp_end: "${PIHOLE_DHCP_END}"
+      # FTLCONF_dhcp_router: "${PIHOLE_DHCP_ROUTER}"
+      # FTLCONF_dhcp_leaseTime: "24h"
+      # FTLCONF_dhcp_ipv6: "true"
       FTLCONF_dns_etc_dnsmasq_d: "true"
     volumes:
       - "./pihole:/etc/pihole"
@@ -46,6 +61,21 @@ services:
     depends_on:
       unbound:
         condition: service_healthy
+
+  kea-dhcp4:
+    image: docker.cloudsmith.io/isc/docker/kea-dhcp4:3.0.2
+    container_name: kea_dhcp4
+    hostname: kea_dhcp4
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./kea:/etc/kea
+      - kea_leases:/var/lib/kea
+    depends_on:
+      pihole:
+        condition: service_started
+    environment:
+      TZ: "America/New_York"
 
   unbound:
     container_name: unbound
@@ -406,12 +436,13 @@ volumes:
   umami_db_data:
   firefly_db_data:
   firefly_upload:
+  kea_leases:
 
 networks:
   backend_net:
     driver: bridge
   macvlan:
-    name: pi0vlan
+    name: infra_vlan
     driver: macvlan
     driver_opts:
       parent: "${MACVLAN_PARENT_INTERFACE}"
@@ -422,3 +453,66 @@ networks:
           ip_range: "${MACVLAN_IP_RANGE}"
           aux_addresses:
             host_shim_ip: "${MACVLAN_HOST_SHIM_IP}"
+  mgmt_vlan:
+    driver: macvlan
+    driver_opts:
+      parent: "eth0"
+    ipam:
+      config:
+        - subnet: "192.168.10.0/24"
+          gateway: "192.168.10.1"
+          ip_range: "192.168.10.240/28"
+  personal_vlan:
+    driver: macvlan
+    driver_opts:
+      parent: "eth0.30"
+    ipam:
+      config:
+        - subnet: "192.168.30.0/24"
+          gateway: "192.168.30.1"
+          ip_range: "192.168.30.240/28"
+  work_vlan:
+    driver: macvlan
+    driver_opts:
+      parent: "eth0.40"
+    ipam:
+      config:
+        - subnet: "192.168.40.0/24"
+          gateway: "192.168.40.1"
+          ip_range: "192.168.40.240/28"
+  iot_vlan:
+    driver: macvlan
+    driver_opts:
+      parent: "eth0.50"
+    ipam:
+      config:
+        - subnet: "192.168.50.0/24"
+          gateway: "192.168.50.1"
+          ip_range: "192.168.50.240/28"
+  cam_vlan:
+    driver: macvlan
+    driver_opts:
+      parent: "eth0.60"
+    ipam:
+      config:
+        - subnet: "192.168.60.0/24"
+          gateway: "192.168.60.1"
+          ip_range: "192.168.60.240/28"
+  guest_vlan:
+    driver: macvlan
+    driver_opts:
+      parent: "eth0.70"
+    ipam:
+      config:
+        - subnet: "192.168.70.0/24"
+          gateway: "192.168.70.1"
+          ip_range: "192.168.70.240/28"
+  homelab_vlan:
+    driver: macvlan
+    driver_opts:
+      parent: "eth0.80"
+    ipam:
+      config:
+        - subnet: "192.168.80.0/24"
+          gateway: "192.168.80.1"
+          ip_range: "192.168.80.240/28"
