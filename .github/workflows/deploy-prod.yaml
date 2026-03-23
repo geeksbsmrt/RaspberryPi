@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "docker/**"
+      - "scripts/**"
       - "secrets.sops.env"
       - ".github/workflows/deploy-prod.yaml"
   workflow_dispatch:
@@ -186,6 +187,34 @@ jobs:
             exit 1
           fi
 
+          # --- Kea DHCP4 ---
+          KEA_TEMPLATE_PATH="$GITHUB_WORKSPACE/docker/kea/kea-dhcp4.conf.template"
+          KEA_OUTPUT_PATH="$GITHUB_WORKSPACE/docker/kea/kea-dhcp4.conf"
+          echo "Templating Kea DHCP4 configuration..."
+          if [ ! -f "${KEA_TEMPLATE_PATH}" ]; then
+            echo "ERROR: Kea template file NOT FOUND at ${KEA_TEMPLATE_PATH}"
+            exit 1
+          fi
+          envsubst < "${KEA_TEMPLATE_PATH}" > "${KEA_OUTPUT_PATH}"
+          if [ $? -eq 0 ]; then
+            echo "Kea DHCP4 configuration templated successfully."
+          else
+            echo "ERROR: envsubst for Kea command failed."
+            exit 1
+          fi
+
+      - name: Deploy VLAN setup script and systemd unit
+        run: |
+          sudo mkdir -p /opt/homelab/scripts
+          sudo cp "$GITHUB_WORKSPACE/scripts/setup-vlans.sh" /opt/homelab/scripts/
+          sudo chmod +x /opt/homelab/scripts/setup-vlans.sh
+          sudo cp "$GITHUB_WORKSPACE/scripts/pi-vlans.service" /etc/systemd/system/
+          sudo systemctl daemon-reload
+          sudo systemctl enable pi-vlans.service
+
+      - name: Ensure VLAN sub-interfaces exist
+        run: sudo systemctl start pi-vlans.service
+
       - name: Sync configuration files
         id: sync
         run: |
@@ -198,7 +227,8 @@ jobs:
             --exclude ".github/" \
             --exclude "*.sops.env" \
             --exclude "prometheus/config/prometheus.yml.template" \
-            --exclude "unbound/unbound.conf.template" > rsync_output.txt
+            --exclude "unbound/unbound.conf.template" \
+            --exclude "kea/kea-dhcp4.conf.template" > rsync_output.txt
 
           cat rsync_output.txt
 
