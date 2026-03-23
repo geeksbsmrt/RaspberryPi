@@ -1,0 +1,58 @@
+name: Deploy Router Scripts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "router/scripts/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Router
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy scripts to router
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.ROUTER_IP }}
+          username: ${{ secrets.ROUTER_SSH_USER }}
+          key: ${{ secrets.ROUTER_SSH_KEY }}
+          source: "router/scripts/*"
+          target: "/jffs/scripts/"
+          strip_components: 2
+
+      - name: Set permissions and apply services
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.ROUTER_IP }}
+          username: ${{ secrets.ROUTER_SSH_USER }}
+          key: ${{ secrets.ROUTER_SSH_KEY }}
+          script: |
+            chmod +x /jffs/scripts/services-start \
+                      /jffs/scripts/firewall-start \
+                      /jffs/scripts/confirm-firewall.sh
+            /jffs/scripts/services-start
+
+      - name: Apply firewall rules (dead man's switch active)
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.ROUTER_IP }}
+          username: ${{ secrets.ROUTER_SSH_USER }}
+          key: ${{ secrets.ROUTER_SSH_KEY }}
+          script: /jffs/scripts/firewall-start
+
+      - name: Verify connectivity and confirm
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.ROUTER_IP }}
+          username: ${{ secrets.ROUTER_SSH_USER }}
+          key: ${{ secrets.ROUTER_SSH_KEY }}
+          command_timeout: 30s
+          script: |
+            echo "Connectivity verified (SSH still works)."
+            /jffs/scripts/confirm-firewall.sh
