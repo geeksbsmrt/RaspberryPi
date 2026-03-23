@@ -1,0 +1,12 @@
+[Unit]
+Description=Create 802.1Q VLAN sub-interfaces
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/homelab/scripts/setup-vlans.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
