@@ -1,0 +1,101 @@
+#!/bin/sh
+# firewall-start — Merlin firmware: runs after firewall init.
+# Implements inter-VLAN isolation with dead man's switch.
+#
+# Access Policy Matrix:
+#   Management (br0/10)  — Admin only, no internet
+#   Infrastructure (br20) — Internet, reachable by Personal, DNS/DHCP by all
+#   Personal (br30)       — Internet, full LAN access
+#   Work (br40)           — Internet, isolated from Personal
+#   IoT (br50)            — Internet, no cross-VLAN
+#   Cameras (br60)        — No internet, NVR → Infra only
+#   Guest (br70)          — Internet only, fully isolated
+#   Homelab (br80)        — Internet, isolated from Personal
+
+PIHOLE_IP="192.168.20.1"
+MGMT_SUBNET="192.168.10.0/24"
+INFRA_SUBNET="192.168.20.0/24"
+PERSONAL_SUBNET="192.168.30.0/24"
+WORK_SUBNET="192.168.40.0/24"
+IOT_SUBNET="192.168.50.0/24"
+CAM_SUBNET="192.168.60.0/24"
+GUEST_SUBNET="192.168.70.0/24"
+HOMELAB_SUBNET="192.168.80.0/24"
+
+# WAN interface — verify with: nvram get wan0_ifname
+WAN_IF="eth0"
+
+# ========================================================
+# DEAD MAN'S SWITCH
+# Saves current (working) rules. Schedules auto-revert in 5 min.
+# To confirm: /jffs/scripts/confirm-firewall.sh
+# ========================================================
+iptables-save > /tmp/.fw_backup
+(
+  sleep 300
+  if [ ! -f /tmp/.fw_confirmed ]; then
+    logger -t "firewall-start" "DEAD MAN'S SWITCH: No confirmation. Reverting firewall rules."
+    iptables-restore < /tmp/.fw_backup
+  else
+    logger -t "firewall-start" "Firewall confirmed. Cleaning up."
+    rm -f /tmp/.fw_confirmed /tmp/.fw_backup
+  fi
+) &
+
+# ========================================================
+# RULES — iptables -I inserts at top, -A appends at bottom.
+# Order matters: ACCEPT rules inserted first, DROP rules appended.
+# ========================================================
+
+# --- Allow established/related connections ---
+iptables -I FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# --- Allow all VLANs → Pi-hole DNS (UDP+TCP 53) ---
+for BR in br0 br20 br30 br40 br50 br60 br70 br80; do
+  iptables -I FORWARD -i "$BR" -d "$PIHOLE_IP" -p udp --dport 53 -j ACCEPT
+  iptables -I FORWARD -i "$BR" -d "$PIHOLE_IP" -p tcp --dport 53 -j ACCEPT
+done
+
+# --- Allow Personal (br30) → everywhere (full LAN access, implicit) ---
+# No DROP rules target br30 as source, so it can reach all VLANs + WAN.
+
+# --- Allow Personal (br30) → Infrastructure (br20) ---
+# Already implicit, but be explicit for clarity:
+iptables -A FORWARD -i br30 -d "$INFRA_SUBNET" -j ACCEPT
+
+# --- Management (br0) — No internet ---
+iptables -A FORWARD -i br0 -o "$WAN_IF" -j DROP
+
+# --- Work (br40) — Internet, isolated from Personal ---
+iptables -A FORWARD -i br40 -d "$PERSONAL_SUBNET" -j DROP
+iptables -A FORWARD -i br40 -o "$WAN_IF" -j ACCEPT
+
+# --- IoT (br50) — Internet, no cross-VLAN ---
+iptables -A FORWARD -i br50 -d "$MGMT_SUBNET" -j DROP
+iptables -A FORWARD -i br50 -d "$INFRA_SUBNET" -j DROP
+iptables -A FORWARD -i br50 -d "$PERSONAL_SUBNET" -j DROP
+iptables -A FORWARD -i br50 -d "$WORK_SUBNET" -j DROP
+iptables -A FORWARD -i br50 -d "$CAM_SUBNET" -j DROP
+iptables -A FORWARD -i br50 -d "$GUEST_SUBNET" -j DROP
+iptables -A FORWARD -i br50 -d "$HOMELAB_SUBNET" -j DROP
+iptables -A FORWARD -i br50 -o "$WAN_IF" -j ACCEPT
+
+# --- Cameras (br60) — No internet, NVR → Infra only ---
+iptables -A FORWARD -i br60 -d "$INFRA_SUBNET" -j ACCEPT
+iptables -A FORWARD -i br60 -o "$WAN_IF" -j DROP
+iptables -A FORWARD -i br60 -j DROP
+
+# --- Guest (br70) — Internet only, fully isolated ---
+iptables -A FORWARD -i br70 -d "192.168.0.0/16" -j DROP
+iptables -A FORWARD -i br70 -o "$WAN_IF" -j ACCEPT
+
+# --- Homelab (br80) — Internet, isolated from Personal ---
+iptables -A FORWARD -i br80 -d "$PERSONAL_SUBNET" -j DROP
+iptables -A FORWARD -i br80 -o "$WAN_IF" -j ACCEPT
+
+# --- NAT for VLANs that need internet ---
+for SUBNET in "$INFRA_SUBNET" "$PERSONAL_SUBNET" "$WORK_SUBNET" "$IOT_SUBNET" "$GUEST_SUBNET" "$HOMELAB_SUBNET"; do
+  iptables -t nat -A POSTROUTING -o "$WAN_IF" -s "$SUBNET" -j MASQUERADE
+done
+
+logger -t "firewall-start" "Inter-VLAN rules applied. Dead man's switch active (5 min). Confirm: /jffs/scripts/confirm-firewall.sh"

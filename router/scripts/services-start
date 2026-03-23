@@ -1,0 +1,61 @@
+#!/bin/sh
+# services-start — Merlin firmware: runs after services are up.
+# Creates 802.1Q tags on LAN ports and bridges SSIDs to VLANs.
+# Management (VLAN 10) is untagged on br0 — no config needed.
+
+LAN_PI="eth4"   # LAN port 4 → Pi (trunk port, carries all tagged VLANs)
+LAN_IOT="eth3"  # LAN port 3 → Philips Hue Bridge (IoT access port)
+
+# VLAN definitions: ID:bridge:gateway
+VLANS="20:br20:192.168.20.1 30:br30:192.168.30.1 40:br40:192.168.40.1 50:br50:192.168.50.1 60:br60:192.168.60.1 70:br70:192.168.70.1 80:br80:192.168.80.1"
+
+for ENTRY in $VLANS; do
+  VID=$(echo "$ENTRY" | cut -d: -f1)
+  BR=$(echo "$ENTRY" | cut -d: -f2)
+  GW=$(echo "$ENTRY" | cut -d: -f3)
+  TAGGED="${LAN_PI}.${VID}"
+
+  # Create tagged interface on Pi trunk port
+  if ! ip link show "$TAGGED" > /dev/null 2>&1; then
+    ip link add link "$LAN_PI" name "$TAGGED" type vlan id "$VID"
+  fi
+
+  # Create bridge
+  brctl addbr "$BR" 2>/dev/null || true
+  brctl addif "$BR" "$TAGGED" 2>/dev/null || true
+
+  # Bring up
+  ip link set "$TAGGED" up
+  ip link set "$BR" up
+
+  # Assign gateway (flush first for idempotency)
+  ip addr flush dev "$BR" 2>/dev/null || true
+  ip addr add "${GW}/24" dev "$BR"
+done
+
+# --- Wired Access Ports ---
+# LAN Port 3 (eth3) is an untagged access port for IoT VLAN 50.
+# Remove eth3 from br0 (Personal/Management) and add to br50 (IoT).
+brctl delif br0 "$LAN_IOT" 2>/dev/null || true
+brctl addif br50 "$LAN_IOT" 2>/dev/null || true
+
+# --- SSID-to-Bridge Mapping ---
+# 2.4GHz + 5GHz primary SSIDs → Personal (VLAN 30)
+brctl delif br0 wl0 2>/dev/null || true
+brctl delif br0 wl1 2>/dev/null || true
+brctl addif br30 wl0 2>/dev/null || true
+brctl addif br30 wl1 2>/dev/null || true
+
+# Guest Network 1 SSIDs → IoT (VLAN 50)
+brctl addif br50 wl0.1 2>/dev/null || true
+brctl addif br50 wl1.1 2>/dev/null || true
+
+# Guest Network 2 SSIDs → Guest (VLAN 70)
+brctl addif br70 wl0.2 2>/dev/null || true
+brctl addif br70 wl1.2 2>/dev/null || true
+
+# Guest Network 3 SSIDs → Work (VLAN 40)
+brctl addif br40 wl0.3 2>/dev/null || true
+brctl addif br40 wl1.3 2>/dev/null || true
+
+logger -t "services-start" "VLAN bridges configured: br20-br80. IoT access port on ${LAN_IOT}."
