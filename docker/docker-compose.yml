@@ -196,7 +196,7 @@ services:
       start_period: 30s
 
   grafana:
-    image: grafana/grafana-oss:12.4.1
+    image: grafana/grafana-oss:12.4.2
     container_name: grafana
     hostname: grafana
     restart: unless-stopped
