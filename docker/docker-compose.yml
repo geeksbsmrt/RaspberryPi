@@ -1,6 +1,6 @@
 services:
   cloudflare_ddns:
-    image: favonia/cloudflare-ddns:1.15.1
+    image: favonia/cloudflare-ddns:1.16.2
     container_name: cloudflare_ddns
     hostname: cloudflare_ddns
     restart: unless-stopped
