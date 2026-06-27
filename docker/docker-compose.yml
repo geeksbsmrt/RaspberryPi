@@ -139,7 +139,7 @@ services:
       retries: 5
 
   umami_app:
-    image: ghcr.io/umami-software/umami:3.1.0
+    image: ghcr.io/umami-software/umami:3.2.0
     container_name: umami_app
     hostname: umami_app
     restart: unless-stopped
