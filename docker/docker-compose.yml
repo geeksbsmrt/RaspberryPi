@@ -269,7 +269,7 @@ services:
       backend_net: {}
 
   blackbox_exporter:
-    image: prom/blackbox-exporter:v0.29.0
+    image: prom/blackbox-exporter:v0.29.1
     container_name: blackbox
     hostname: blackbox
     restart: unless-stopped
